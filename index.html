@@ -3,296 +3,356 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NAR-PPF Order System</title>
+    <title>NAR-PPF Store</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --accent: #007aff; /* Синий NAR */
-            --bg: #ffffff;
-            --secondary-bg: #f2f2f7;
+            --primary: #007aff; /* Синий цвет как на сайте/скриншоте */
+            --bg: #f2f2f7;      /* Светло-серый фон */
+            --card: #ffffff;    /* Белые плашки */
             --text: #000000;
-            --border: #d1d1d6;
-            --hint: #8e8e93;
+            --gray-text: #8e8e93;
+            --border: #c6c6c8;
+            --danger: #ff3b30;
         }
 
         body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background-color: var(--secondary-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
             color: var(--text);
             margin: 0; padding: 0;
-            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 90px; /* Отступ под нижнее меню */
         }
 
-        /* Шапка */
-        .header {
-            padding: 30px 20px 15px;
-            background: var(--secondary-bg);
-        }
-        .header h1 { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -1px; }
-        .header p { margin: 5px 0 0; color: var(--hint); font-size: 15px; }
-
-        /* Табличный вид меню */
-        .container { padding: 0 16px 160px; }
-        
-        .table-view {
-            background: var(--bg);
-            border-radius: 12px;
-            border: 0.5px solid var(--border);
-            overflow: hidden;
-            margin-bottom: 25px;
+        /* Заголовки разделов */
+        .section-header {
+            padding: 20px 16px 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--gray-text);
+            font-weight: 600;
         }
 
-        .table-row {
+        /* Табличный блок (как в iOS/Bunch) */
+        .list-group {
+            background: var(--card);
+            border-top: 0.5px solid var(--border);
+            border-bottom: 0.5px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .list-item {
             display: flex;
             align-items: center;
-            padding: 14px 16px;
-            border-bottom: 0.5px solid var(--border);
+            padding: 12px 16px;
+            border-bottom: 0.5px solid #e5e5ea;
             min-height: 44px;
         }
-        .table-row:last-child { border-bottom: none; }
+        
+        .list-item:last-child { border-bottom: none; }
 
-        .row-label { flex: 1; font-weight: 600; font-size: 17px; }
+        .item-label { flex: 1; font-size: 17px; font-weight: 500; }
+        
+        /* Элементы управления товаром */
+        .item-controls { display: flex; align-items: center; gap: 10px; }
 
-        /* Переключатель Рул/Метр */
-        .unit-toggle {
+        .segment-control {
             display: flex; background: #efeff4;
-            border-radius: 8px; padding: 2px; margin-right: 12px;
+            padding: 2px; border-radius: 8px;
         }
-        .u-btn {
-            border: none; background: none; padding: 6px 12px;
-            font-size: 13px; font-weight: 600; border-radius: 7px;
-            color: var(--text); transition: 0.2s;
+        
+        .segment-btn {
+            border: none; background: none;
+            padding: 4px 10px; font-size: 13px; font-weight: 500;
+            border-radius: 6px; cursor: pointer;
         }
-        .u-btn.active { background: white; color: var(--accent); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        .segment-btn.active {
+            background: var(--card);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            color: var(--primary);
+        }
 
         .qty-input {
-            width: 65px; padding: 10px; border-radius: 9px;
-            border: 1px solid var(--border); text-align: center;
-            font-weight: 700; font-size: 16px; background: #fafafa;
+            width: 50px; padding: 6px;
+            text-align: center; border-radius: 8px;
+            border: 1px solid #e5e5ea; font-size: 16px;
+            background: #f9f9f9;
         }
 
-        /* Поля ввода (Профиль/Адрес) */
-        .input-field {
+        /* Поля ввода */
+        .input-plain {
             width: 100%; border: none; outline: none;
-            font-size: 17px; background: transparent; padding: 10px 0;
+            font-size: 17px; background: transparent;
+            text-align: right; color: var(--primary);
         }
-        .field-label { width: 110px; font-size: 14px; color: var(--hint); font-weight: 600; text-transform: uppercase; }
+        .input-plain::placeholder { color: var(--gray-text); }
+        
+        select.input-plain { direction: rtl; appearance: none; }
 
-        /* Нижняя навигация */
-        .bottom-nav {
-            position: fixed; bottom: 0; width: 100%;
-            background: rgba(255,255,255,0.92);
+        /* Нижняя навигация (Tab Bar) */
+        .tab-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.95);
             backdrop-filter: blur(20px);
-            border-top: 0.5px solid var(--border);
+            border-top: 0.5px solid #b2b2b2;
             display: flex; justify-content: space-around;
-            padding: 10px 0 35px;
-            z-index: 100;
+            padding-bottom: 20px; /* Для iPhone X+ */
+            padding-top: 10px;
+            z-index: 1000;
         }
-        .nav-item {
+
+        .tab-item {
             display: flex; flex-direction: column; align-items: center;
-            color: var(--hint); font-size: 11px; font-weight: 500; text-decoration: none;
-            transition: 0.2s;
+            font-size: 10px; color: var(--gray-text);
+            gap: 4px; cursor: pointer; width: 60px;
         }
-        .nav-item.active { color: var(--accent); }
-        .nav-icon { font-size: 24px; margin-bottom: 3px; }
 
-        /* Кнопка действия */
-        .action-bar {
-            position: fixed; bottom: 95px; width: 100%;
-            padding: 0 16px; box-sizing: border-box;
-            z-index: 99;
-        }
-        .btn-main {
-            width: 100%; background: var(--accent); color: white;
-            border: none; padding: 18px; border-radius: 16px;
-            font-size: 17px; font-weight: 700; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,122,255,0.3);
-        }
-        .btn-main:active { transform: scale(0.98); opacity: 0.9; }
+        .tab-item.active { color: var(--primary); }
+        
+        .tab-icon { font-size: 24px; line-height: 1; }
 
-        .step { display: none; }
-        .step.active { display: block; animation: fadeIn 0.3s; }
+        /* Экраны */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.2s; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Кнопка оформления */
+        .main-btn {
+            background: var(--primary); color: white;
+            border: none; width: 100%; padding: 16px;
+            border-radius: 12px; font-size: 17px; font-weight: 600;
+            margin-top: 20px; cursor: pointer;
+        }
+        .main-btn:active { opacity: 0.8; }
+
+        .hint-text { padding: 0 16px; font-size: 13px; color: var(--gray-text); margin-bottom: 10px; }
+        
+        /* Счетчик в таббаре */
+        .badge {
+            position: absolute; top: -5px; right: 10px;
+            background: var(--danger); color: white;
+            font-size: 10px; padding: 2px 6px; border-radius: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-<div id="screen-catalog" class="step active">
-    <div class="header">
-        <h1>Меню</h1>
-        <p>Выберите пленку</p>
-    </div>
-    <div class="container">
-        <div class="table-view" id="catalog-list"></div>
-    </div>
+<div id="tab-menu" class="screen active">
+    <div class="section-header">Каталог пленок</div>
+    <div class="list-group" id="catalog-list">
+        </div>
+    <div class="hint-text">Выберите тип (Рулон/Метр) и укажите количество.</div>
 </div>
 
-<div id="screen-cart" class="step">
-    <div class="header">
-        <h1>Корзина</h1>
-        <p>Детали доставки</p>
-    </div>
-    <div class="container">
-        <div class="table-view">
-            <div class="table-row">
-                <div class="field-label">Город</div>
-                <select id="f-city" class="input-field" onchange="checkCity()">
-                    <option value="Москва">Москва</option>
-                    <option value="Регион">Другой город</option>
-                </select>
-            </div>
-            <div class="table-row" id="row-custom-city" style="display:none">
-                <div class="field-label">Уточните</div>
-                <input type="text" id="f-custom-city" class="input-field" placeholder="Название города">
-            </div>
-            <div class="table-row">
-                <div class="field-label">Адрес *</div>
-                <input type="text" id="f-address" class="input-field" placeholder="Улица, дом, кв">
-            </div>
-            <div class="table-row">
-                <div class="field-label">Доставка</div>
-                <select id="f-delivery" class="input-field">
-                    <option value="Водитель">🚛 Водитель</option>
-                    <option value="Такси">🚕 Такси</option>
-                    <option value="ТК">📦 ТК (СДЭК/ПЭК)</option>
-                </select>
-            </div>
+<div id="tab-cart" class="screen">
+    <div class="section-header">Параметры доставки</div>
+    <div class="list-group">
+        <div class="list-item">
+            <div class="item-label">Город</div>
+            <select id="city" class="input-plain" onchange="toggleCustomCity()">
+                <option value="Москва">Москва</option>
+                <option value="Другой">Другой город</option>
+            </select>
+        </div>
+        <div class="list-item" id="row-custom-city" style="display:none">
+            <div class="item-label">Укажите город</div>
+            <input type="text" id="custom-city" class="input-plain" placeholder="Название">
+        </div>
+        <div class="list-item">
+            <div class="item-label">Адрес *</div>
+            <input type="text" id="address" class="input-plain" placeholder="Улица, дом">
+        </div>
+        <div class="list-item">
+            <div class="item-label">Способ</div>
+            <select id="delivery" class="input-plain">
+                <option value="Водитель">Водитель</option>
+                <option value="Такси">Такси</option>
+                <option value="ТК">СДЭК / ТК</option>
+            </select>
+        </div>
+        <div class="list-item">
+            <div class="item-label">Время</div>
+            <select id="time" class="input-plain">
+                <option value="10-14">10:00 - 14:00</option>
+                <option value="14-18">14:00 - 18:00</option>
+                <option value="Срочно">Как можно скорее</option>
+            </select>
         </div>
     </div>
 </div>
 
-<div id="screen-profile" class="step">
-    <div class="header">
-        <h1>Профиль</h1>
-        <p>Ваши контакты</p>
-    </div>
-    <div class="container">
-        <div class="table-view">
-            <div class="table-row">
-                <div class="field-label">Имя *</div>
-                <input type="text" id="f-name" class="input-field" placeholder="Введите имя">
-            </div>
-            <div class="table-row">
-                <div class="field-label">Телефон *</div>
-                <input type="tel" id="f-phone" class="input-field" placeholder="+7 (___) ___-__-__">
-            </div>
-            <div class="table-row">
-                <div class="field-label">Студия</div>
-                <input type="text" id="f-studio" class="input-field" placeholder="Название (если есть)">
-            </div>
-            <div class="table-row" style="height: 120px; align-items: flex-start;">
-                <div class="field-label" style="padding-top: 10px;">Заметка</div>
-                <textarea id="f-comm" class="input-field" style="height: 100px; resize: none;" placeholder="Комментарий..."></textarea>
-            </div>
+<div id="tab-profile" class="screen">
+    <div class="section-header">Контактные данные</div>
+    <div class="list-group">
+        <div class="list-item">
+            <div class="item-label">Имя *</div>
+            <input type="text" id="name" class="input-plain" placeholder="Ваше имя">
+        </div>
+        <div class="list-item">
+            <div class="item-label">Телефон *</div>
+            <input type="tel" id="phone" class="input-plain" placeholder="+7...">
+        </div>
+        <div class="list-item">
+            <div class="item-label">Студия</div>
+            <input type="text" id="studio" class="input-plain" placeholder="Необязательно">
         </div>
     </div>
+
+    <div class="section-header">Дополнительно</div>
+    <div class="list-group">
+        <div class="list-item">
+            <textarea id="comment" class="input-plain" style="text-align: left; height: 60px;" placeholder="Комментарий к заказу..."></textarea>
+        </div>
+    </div>
+
+    <div style="padding: 0 16px;">
+        <button class="main-btn" onclick="submitOrder()">Оформить заказ</button>
+    </div>
 </div>
 
-<div class="action-bar">
-    <button class="btn-main" onclick="handleNext()" id="main-btn">Далее</button>
-</div>
-
-<nav class="bottom-nav">
-    <a href="javascript:void(0)" class="nav-item active" id="nav-1" onclick="showStep(1)">
-        <span class="nav-icon">📋</span>
+<div class="tab-bar">
+    <div class="tab-item active" onclick="switchTab('menu')">
+        <div class="tab-icon">📑</div>
         <div>Меню</div>
-    </a>
-    <a href="javascript:void(0)" class="nav-item" id="nav-2" onclick="showStep(2)">
-        <span class="nav-icon">🛒</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('cart')" style="position: relative;">
+        <div class="tab-icon">🛒</div>
         <div>Корзина</div>
-    </a>
-    <a href="javascript:void(0)" class="nav-item" id="nav-3" onclick="showStep(3)">
-        <span class="nav-icon">👤</span>
+        <span id="badge" class="badge">0</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('profile')">
+        <div class="tab-icon">👤</div>
         <div>Профиль</div>
-    </a>
-</nav>
+    </div>
+</div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    let step = 1;
-    let cart = {};
-    const items = ["Н190", "H190 Long (1.82)", "H210", "Sm 190 (Сатин)", "L190", "M190 (мат)", "N1", "N2", "N3", "Лобаш", "Тонер для фар", "Crystal ultra gloss v2"];
+    // Список товаров (можно расширять)
+    const products = [
+        "Н190", "H190 Long (1.82)", "H210", "Sm 190 (Сатин)", "L190", 
+        "M190 (мат)", "N1", "N2", "N3", "Лобаш", 
+        "Тонер для фар", "Crystal ultra gloss v2"
+    ];
 
-    function init() {
-        const list = document.getElementById('catalog-list');
-        list.innerHTML = items.map(name => `
-            <div class="table-row">
-                <div class="row-label">${name}</div>
-                <div class="unit-toggle">
-                    <button class="u-btn active" id="r-${name}" onclick="setU('${name}','рул.')">рул.</button>
-                    <button class="u-btn" id="m-${name}" onclick="setU('${name}','м.')">м.</button>
+    let cart = {}; // Хранение корзины
+
+    // Инициализация каталога
+    function renderCatalog() {
+        const container = document.getElementById('catalog-list');
+        container.innerHTML = products.map(p => `
+            <div class="list-item">
+                <div class="item-label">${p}</div>
+                <div class="item-controls">
+                    <div class="segment-control">
+                        <button class="segment-btn active" id="btn-r-${p}" onclick="setUnit('${p}', 'рул.')">Рул</button>
+                        <button class="segment-btn" id="btn-m-${p}" onclick="setUnit('${p}', 'м.')">Метр</button>
+                    </div>
+                    <input type="number" id="qty-${p}" class="qty-input" placeholder="0" min="0" onchange="updateCart('${p}')">
                 </div>
-                <input type="number" class="qty-input" id="q-${name}" placeholder="0" onchange="sync('${name}')">
             </div>
         `).join('');
     }
 
-    function setU(n, u) {
-        document.getElementById(`r-${n}`).classList.toggle('active', u==='рул.');
-        document.getElementById(`m-${n}`).classList.toggle('active', u==='м.');
-        sync(n);
+    // Логика переключения единиц измерения
+    function setUnit(id, unit) {
+        document.getElementById(`btn-r-${id}`).className = `segment-btn ${unit === 'рул.' ? 'active' : ''}`;
+        document.getElementById(`btn-m-${id}`).className = `segment-btn ${unit === 'м.' ? 'active' : ''}`;
+        updateCart(id);
     }
 
-    function sync(n) {
-        const q = parseFloat(document.getElementById(`q-${n}`).value) || 0;
-        const u = document.getElementById(`r-${n}`).classList.contains('active') ? 'рул.' : 'м.';
-        if(q > 0) cart[n] = { q, u }; else delete cart[n];
+    // Обновление корзины
+    function updateCart(id) {
+        const qty = parseFloat(document.getElementById(`qty-${id}`).value);
+        const unit = document.getElementById(`btn-r-${id}`).classList.contains('active') ? 'рул.' : 'м.';
+        
+        if (qty > 0) {
+            cart[id] = { qty, unit };
+        } else {
+            delete cart[id];
+        }
+        
+        // Обновление бейджика
+        const count = Object.keys(cart).length;
+        const badge = document.getElementById('badge');
+        badge.innerText = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+        
         tg.HapticFeedback.selectionChanged();
     }
 
-    function showStep(s) {
-        step = s;
-        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    // Переключение табов
+    function switchTab(tabName) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
         
-        if(s===1) document.getElementById('screen-catalog').classList.add('active');
-        if(s===2) document.getElementById('screen-cart').classList.add('active');
-        if(s===3) document.getElementById('screen-profile').classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
         
-        document.getElementById(`nav-${s}`).classList.add('active');
-        document.getElementById('main-btn').innerText = (s === 3) ? "Оформить заказ" : "Далее";
+        // Подсветка активной иконки
+        const tabIndex = tabName === 'menu' ? 0 : tabName === 'cart' ? 1 : 2;
+        document.querySelectorAll('.tab-item')[tabIndex].classList.add('active');
     }
 
-    function handleNext() {
-        if(step === 1 && Object.keys(cart).length === 0) { alert("Выберите товар!"); return; }
-        if(step < 3) showStep(step + 1);
-        else submit();
+    // Показ поля "Другой город"
+    function toggleCustomCity() {
+        const val = document.getElementById('city').value;
+        document.getElementById('row-custom-city').style.display = (val === 'Другой') ? 'flex' : 'none';
     }
 
-    function checkCity() {
-        document.getElementById('row-custom-city').style.display = 
-            document.getElementById('f-city').value === 'Регион' ? 'flex' : 'none';
-    }
-
-    function submit() {
-        const name = document.getElementById('f-name').value.trim();
-        const phone = document.getElementById('f-phone').value.trim();
-        const addr = document.getElementById('f-address').value.trim();
+    // Отправка заказа (с валидацией)
+    function submitOrder() {
+        const name = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const address = document.getElementById('address').value.trim();
         
-        if(!name || !phone || !addr) {
-            alert("Пожалуйста, заполните Имя, Телефон и Адрес!");
+        // 1. Проверка корзины
+        if (Object.keys(cart).length === 0) {
+            tg.showAlert("Корзина пуста! Выберите товары в Меню.");
+            switchTab('menu');
             return;
         }
 
+        // 2. Проверка обязательных полей
+        if (!name || !phone || !address) {
+            tg.showAlert("Пожалуйста, заполните Имя, Телефон и Адрес.");
+            if(!address) switchTab('cart');
+            else switchTab('profile');
+            return;
+        }
+
+        // 3. Формирование данных
+        const cityVal = document.getElementById('city').value;
+        const finalCity = cityVal === 'Другой' ? document.getElementById('custom-city').value : cityVal;
+
         const data = {
-            cart: Object.keys(cart).map(k => ({ item: k + (cart[k].u==='м.'?' (отрез)':''), qty: cart[k].q, unit: cart[k].u })),
+            cart: Object.keys(cart).map(key => ({
+                item: key + (cart[key].unit === 'м.' ? ' (отрез)' : ''),
+                qty: cart[key].qty,
+                unit: cart[key].unit
+            })),
             user: {
                 name: name,
                 phone: phone,
-                city: document.getElementById('f-city').value === 'Москва' ? 'Москва' : document.getElementById('f-custom-city').value,
-                address: addr,
-                studio: document.getElementById('f-studio').value,
-                delivery: document.getElementById('f-delivery').value,
-                comment: document.getElementById('f-comm').value
+                city: finalCity,
+                address: address,
+                studio: document.getElementById('studio').value,
+                delivery: document.getElementById('delivery').value,
+                time: document.getElementById('time').value,
+                comment: document.getElementById('comment').value
             }
         };
+
         tg.sendData(JSON.stringify(data));
         tg.close();
     }
 
-    init();
+    renderCatalog();
 </script>
 </body>
 </html>
