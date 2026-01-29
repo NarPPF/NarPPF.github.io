@@ -3,128 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Заказ продукции</title>
+    <title>Premium Catalog</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --tg-theme-bg-color: #ffffff;
-            --tg-theme-secondary-bg-color: #f0f2f5;
-            --tg-theme-button-color: #248bed;
-            --tg-theme-button-text-color: #ffffff;
-            --tg-theme-text-color: #000000;
-            --tg-theme-hint-color: #999999;
+            --bg: #f2f2f7;
+            --card-bg: #ffffff;
+            --accent: #007aff;
+            --text: #000000;
+            --hint: #8e8e93;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-secondary-bg-color);
-            color: var(--tg-theme-text-color);
-            margin: 0; padding: 0; overflow: hidden;
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0; padding: 0;
+            user-select: none;
         }
 
-        .container {
-            display: flex; flex-direction: column; height: 100vh;
-        }
-
+        /* Стиль "Меню" как на скриншотах */
         .header {
-            padding: 15px; background: var(--tg-theme-bg-color);
-            text-align: center; font-weight: bold; border-bottom: 1px solid #ddd;
+            padding: 20px 15px;
+            background: var(--card-bg);
+            border-bottom: 0.5px solid #d1d1d6;
+            text-align: left;
+        }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 800; }
+        .header p { margin: 5px 0 0; color: var(--hint); font-size: 14px; }
+
+        .content { padding: 15px; padding-bottom: 120px; }
+
+        /* Карточка товара */
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .product-card:active { transform: scale(0.98); }
+
+        .p-info { flex-grow: 1; }
+        .p-title { font-weight: 700; font-size: 17px; margin-bottom: 4px; }
+        .p-price { color: var(--accent); font-weight: 600; font-size: 14px; }
+
+        .p-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        
+        .unit-selector {
+            background: #f2f2f7;
+            border-radius: 8px;
+            padding: 4px;
+            display: flex;
+            gap: 2px;
+        }
+        .unit-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+        }
+        .unit-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .qty-input {
+            width: 70px;
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid #d1d1d6;
+            text-align: center;
+            font-weight: bold;
         }
 
-        .content {
-            flex-grow: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px;
+        /* Поля ввода (Шаг 2-4) */
+        .form-group { margin-bottom: 16px; }
+        .form-label { font-size: 13px; font-weight: 600; color: var(--hint); margin-left: 5px; margin-bottom: 5px; display: block; }
+        input[type="text"], input[type="tel"], select, textarea {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: var(--card-bg);
+            font-size: 16px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
         }
 
-        .step { display: none; }
+        /* Кнопки навигации */
+        .footer-nav {
+            position: fixed;
+            bottom: 0; width: 100%;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            box-sizing: border-box;
+            border-top: 0.5px solid #d1d1d6;
+            display: flex; gap: 10px;
+        }
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .btn-main { background: var(--accent); color: white; }
+        .btn-back { background: #e5e5ea; color: #000; }
+
+        .step { display: none; animation: fadeIn 0.3s; }
         .step.active { display: block; }
-
-        /* Карточки товаров */
-        .item-card {
-            background: var(--tg-theme-bg-color);
-            border-radius: 12px; padding: 12px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .item-title { font-weight: 600; font-size: 15px; margin-bottom: 5px; }
-
-        input, select, textarea {
-            width: 100%; padding: 12px; margin-top: 5px;
-            border-radius: 10px; border: 1px solid #ddd;
-            background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color);
-            font-size: 16px; box-sizing: border-box;
-        }
-
-        .footer {
-            position: fixed; bottom: 0; width: 100%;
-            padding: 15px; background: var(--tg-theme-bg-color);
-            display: flex; gap: 10px; box-sizing: border-box;
-            border-top: 1px solid #ddd;
-        }
-
-        button {
-            flex: 1; padding: 14px; border-radius: 12px;
-            border: none; font-size: 16px; font-weight: 600; cursor: pointer;
-        }
-
-        .btn-next { background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); }
-        .btn-back { background: #e0e0e0; color: #333; }
-
-        .badge { background: #ff3b30; color: white; padding: 2px 6px; border-radius: 8px; font-size: 12px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header" id="step-title">Шаг 1: Выбор товара</div>
-    
+<div id="app">
+    <div class="header">
+        <h1 id="main-title">Каталог</h1>
+        <p id="sub-title">Выберите нужные позиции</p>
+    </div>
+
     <div class="content">
         <div id="step-1" class="step active">
-            <div id="catalog"></div>
+            <div id="catalog-list"></div>
         </div>
 
         <div id="step-2" class="step">
-            <label>Город доставки</label>
-            <select id="city" onchange="updateCityFields()">
-                <option value="Москва">Москва</option>
-                <option value="Другой">Другой город</option>
-            </select>
-            
-            <div id="other-city-group" style="display:none; margin-top:15px;">
-                <label>Укажите ваш город</label>
-                <input type="text" id="custom-city" placeholder="Напр: Санкт-Петербург">
+            <div class="form-group">
+                <label class="form-label">ГОРОД</label>
+                <select id="city" onchange="checkCity()">
+                    <option value="Москва">🏙 Москва</option>
+                    <option value="Регион">🌍 Другой город</option>
+                </select>
             </div>
-
-            <div style="margin-top:15px;">
-                <label>Адрес (улица, дом)</label>
-                <input type="text" id="address" placeholder="Введите адрес">
+            <div id="city-manual" class="form-group" style="display:none">
+                <label class="form-label">УКАЖИТЕ ГОРОД</label>
+                <input type="text" id="custom-city" placeholder="Напр: Казань">
             </div>
-
-            <div style="margin-top:15px;">
-                <label>Название студии (если есть)</label>
-                <input type="text" id="studio" placeholder="Напр: Wrap Studio">
+            <div class="form-group">
+                <label class="form-label">АДРЕС ДОСТАВКИ</label>
+                <input type="text" id="address" placeholder="Улица, дом, кв">
+            </div>
+            <div class="form-group">
+                <label class="form-label">СТУДИЯ (ОПЦИОНАЛЬНО)</label>
+                <input type="text" id="studio" placeholder="Название вашей студии">
             </div>
         </div>
 
         <div id="step-3" class="step">
-            <label>Способ доставки</label>
-            <select id="delivery_meth">
-                <option value="Водитель">🚛 Водитель</option>
-                <option value="Такси">🚕 Такси</option>
-                <option value="ТК">📦 Транспортная компания (СДЭК/и др.)</option>
-            </select>
-
-            <div style="margin-top:15px;">
-                <label>День доставки</label>
-                <select id="delivery_day">
+            <div class="form-group">
+                <label class="form-label">СПОСОБ ДОСТАВКИ</label>
+                <select id="del_meth">
+                    <option value="Водитель">🚛 Водитель</option>
+                    <option value="Такси">🚕 Такси</option>
+                    <option value="ТК">📦 Транспортная компания</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">ДЕНЬ</label>
+                <select id="del_day">
                     <option value="Сегодня">Сегодня</option>
                     <option value="Завтра">Завтра</option>
                 </select>
             </div>
-
-            <div style="margin-top:15px;">
-                <label>Удобное время</label>
-                <select id="delivery_time">
+            <div class="form-group">
+                <label class="form-label">ВРЕМЯ</label>
+                <select id="del_time">
                     <option value="10:00 - 14:00">10:00 - 14:00</option>
                     <option value="14:00 - 18:00">14:00 - 18:00</option>
                     <option value="Срочно">🚀 Как можно скорее</option>
@@ -133,119 +183,112 @@
         </div>
 
         <div id="step-4" class="step">
-            <label>Ваше Имя</label>
-            <input type="text" id="u_name" placeholder="Иван">
-
-            <div style="margin-top:15px;">
-                <label>Номер телефона</label>
+            <div class="form-group">
+                <label class="form-label">ВАШЕ ИМЯ</label>
+                <input type="text" id="u_name" placeholder="Введите имя">
+            </div>
+            <div class="form-group">
+                <label class="form-label">ТЕЛЕФОН</label>
                 <input type="tel" id="u_phone" placeholder="+7 (___) ___-__-__">
             </div>
-
-            <div style="margin-top:15px;">
-                <label>Комментарий к заказу</label>
+            <div class="form-group">
+                <label class="form-label">КОММЕНТАРИЙ</label>
                 <textarea id="u_comm" rows="3" placeholder="Доп. информация..."></textarea>
             </div>
         </div>
     </div>
 
-    <div class="footer">
-        <button id="btn-back" class="btn-back" style="display:none" onclick="changeStep(-1)">Назад</button>
-        <button id="btn-next" class="btn-next" onclick="changeStep(1)">Далее</button>
+    <div class="footer-nav">
+        <button id="btn-back" class="btn btn-back" style="display:none" onclick="goStep(-1)">Назад</button>
+        <button id="btn-next" class="btn btn-main" onclick="goStep(1)">Далее</button>
     </div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
+    tg.MainButton.hide();
 
-    let currentStep = 1;
-    let cart = [];
-    const products = [
+    let step = 1;
+    let cart = {};
+    const items = [
         "Н190", "H190 Long (1.82)", "H210", "Sm 190 (Сатин)", "L190", "M190 (мат)", 
         "N1", "N2", "N3", "Лобаш", "Тонер для фар", "Crystal ultra gloss v2"
     ];
 
-    function initCatalog() {
-        const cat = document.getElementById('catalog');
-        cat.innerHTML = products.map(p => `
-            <div class="item-card">
-                <div class="item-info">
-                    <div class="item-title">${p}</div>
-                    <select id="mode-${p}" style="width:80px; font-size:12px; padding:5px;">
-                        <option value="рул.">Рул.</option>
-                        <option value="м.">Метр</option>
-                    </select>
+    function init() {
+        const list = document.getElementById('catalog-list');
+        list.innerHTML = items.map(name => `
+            <div class="product-card">
+                <div class="p-info">
+                    <div class="p-title">${name}</div>
+                    <div class="p-price">Доступно к заказу</div>
                 </div>
-                <div style="display:flex; align-items:center; gap:5px;">
-                    <input type="number" id="q-${p}" value="0" min="0" step="0.1" style="width:60px; margin:0;" onchange="updateCart('${p}')">
+                <div class="p-actions">
+                    <div class="unit-selector">
+                        <button class="unit-btn active" id="u-r-${name}" onclick="setUnit('${name}', 'рул.')">рул.</button>
+                        <button class="unit-btn" id="u-m-${name}" onclick="setUnit('${name}', 'м.')">м.</button>
+                    </div>
+                    <input type="number" class="qty-input" id="q-${name}" placeholder="0" min="0" onchange="syncCart('${name}')">
                 </div>
             </div>
         `).join('');
     }
 
-    function updateCart(p) {
-        const qty = parseFloat(document.getElementById(`q-${p}`).value);
-        const mode = document.getElementById(`mode-${p}`).value;
-        const idx = cart.findIndex(i => i.id === p);
-
-        if (qty > 0) {
-            const itemData = { id: p, item: p + (mode === 'м.' ? ' (отрез)' : ''), qty: qty, unit: mode };
-            if (idx > -1) cart[idx] = itemData; else cart.push(itemData);
-        } else if (idx > -1) {
-            cart.splice(idx, 1);
-        }
-        tg.HapticFeedback.impactOccurred('light');
+    function setUnit(name, unit) {
+        document.getElementById(`u-r-${name}`).classList.toggle('active', unit==='рул.');
+        document.getElementById(`u-m-${name}`).classList.toggle('active', unit==='м.');
+        syncCart(name);
     }
 
-    function updateCityFields() {
-        const isOther = document.getElementById('city').value === 'Другой';
-        document.getElementById('other-city-group').style.display = isOther ? 'block' : 'none';
+    function syncCart(name) {
+        const q = parseFloat(document.getElementById(`q-${name}`).value) || 0;
+        const u = document.getElementById(`u-r-${name}`).classList.contains('active') ? 'рул.' : 'м.';
+        if(q > 0) cart[name] = { qty: q, unit: u }; else delete cart[name];
+        tg.HapticFeedback.selectionChanged();
     }
 
-    function changeStep(dir) {
-        if (dir === 1 && currentStep === 1 && cart.length === 0) {
-            alert("Выберите хотя бы один товар!"); return;
-        }
+    function checkCity() {
+        document.getElementById('city-manual').style.display = (document.getElementById('city').value === 'Регион') ? 'block' : 'none';
+    }
 
-        currentStep += dir;
-        if (currentStep < 1) currentStep = 1;
-        if (currentStep > 4) { sendFinal(); return; }
-
+    function goStep(dir) {
+        if(dir === 1 && step === 1 && Object.keys(cart).length === 0) { alert("Выберите товар!"); return; }
+        
+        step += dir;
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById(`step-${currentStep}`).classList.add('active');
+        document.getElementById(`step-${step}`).classList.add('active');
         
-        document.getElementById('btn-back').style.display = currentStep === 1 ? 'none' : 'block';
-        document.getElementById('btn-next').innerText = currentStep === 4 ? 'Оформить ✅' : 'Далее';
+        document.getElementById('btn-back').style.display = step === 1 ? 'none' : 'block';
+        document.getElementById('btn-next').innerText = step === 4 ? 'Оформить заказ' : 'Далее';
         
-        const titles = ["", "Выбор товара", "Адрес доставки", "Детали доставки", "Контакты"];
-        document.getElementById('step-title').innerText = `Шаг ${currentStep}: ${titles[currentStep]}`;
+        const titles = ["", "Каталог", "Адрес", "Доставка", "Контакты"];
+        const subs = ["", "Выберите пленку", "Куда везем?", "Как и когда?", "Финальные штрихи"];
+        document.getElementById('main-title').innerText = titles[step];
+        document.getElementById('sub-title').innerText = subs[step];
+
+        if(step > 4) sendData();
     }
 
-    function sendFinal() {
+    function sendData() {
         const data = {
-            cart: cart,
+            cart: Object.keys(cart).map(k => ({ item: k + (cart[k].unit==='м.'?' (отрез)':''), qty: cart[k].qty, unit: cart[k].unit })),
             user: {
                 name: document.getElementById('u_name').value,
                 phone: document.getElementById('u_phone').value,
                 city: document.getElementById('city').value === 'Москва' ? 'Москва' : document.getElementById('custom-city').value,
                 address: document.getElementById('address').value,
                 studio: document.getElementById('studio').value,
-                delivery: document.getElementById('delivery_meth').value,
-                day: document.getElementById('delivery_day').value,
-                time: document.getElementById('delivery_time').value,
+                delivery: document.getElementById('del_meth').value,
+                day: document.getElementById('del_day').value,
+                time: document.getElementById('del_time').value,
                 comment: document.getElementById('u_comm').value
             }
         };
-
-        if (!data.user.name || !data.user.phone) {
-            alert("Заполните имя и телефон!");
-            currentStep = 4; changeStep(0); return;
-        }
-
         tg.sendData(JSON.stringify(data));
     }
 
-    initCatalog();
+    init();
 </script>
 </body>
 </html>
