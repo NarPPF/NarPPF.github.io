@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Store</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 0; padding-bottom: 80px; }
+        .page { display: none; padding: 15px; }
+        .page.active { display: block; }
+        
+        /* Каталог */
+        .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .add-btn { background: #0088cc; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; }
+        
+        /* Форма заказа */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        
+        #footer { position: fixed; bottom: 0; width: 100%; background: #fff; padding: 15px; border-top: 1px solid #ddd; display: flex; justify-content: space-between; box-sizing: border-box; }
+        .main-btn { background: #28a745; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; flex-grow: 1; margin-left: 10px; }
+        .back-btn { background: #6c757d; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="catalog-page" class="page active">
+        <h3>💎 Каталог пленок</h3>
+        <div id="items-container"></div>
+    </div>
+
+    <div id="checkout-page" class="page">
+        <h3>📍 Оформление доставки</h3>
+        <div class="form-group">
+            <label>Имя</label>
+            <input type="text" id="f-name" placeholder="Иван Иванов">
+        </div>
+        <div class="form-group">
+            <label>Телефон</label>
+            <input type="tel" id="f-phone" placeholder="+7...">
+        </div>
+        <div class="form-group">
+            <label>Город</label>
+            <select id="f-city" onchange="toggleCityLogic()">
+                <option value="Москва">Москва</option>
+                <option value="Регион">Другой город</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Адрес / ТК</label>
+            <input type="text" id="f-addr" placeholder="Улица, дом или название ТК">
+        </div>
+        <div id="moscow-only">
+            <div class="form-group">
+                <label>Время доставки</label>
+                <select id="f-time">
+                    <option value="10:00 - 14:00">10:00 - 14:00</option>
+                    <option value="14:00 - 18:00">14:00 - 18:00</option>
+                    <option value="Срочно">🚀 Срочно</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Комментарий</label>
+            <textarea id="f-comm" rows="2"></textarea>
+        </div>
+    </div>
+
+    <div id="footer">
+        <button id="btn-left" class="back-btn" style="display:none" onclick="showPage('catalog')">⬅️ Назад</button>
+        <button id="btn-main" class="main-btn" onclick="nextStep()">Далее (Корзина: 0)</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let cart = [];
+        const products = ["Н190", "H190 Long", "H210", "L190", "Crystal Matte", "Цветная пленка"];
+
+        function renderCatalog() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = products.map(p => `
+                <div class="card">
+                    <div><b>${p}</b></div>
+                    <div>
+                        <select id="t-${p}" style="width:70px"><option value="рул.">Рул.</option><option value="м.">Метр</option></select>
+                        <button class="add-btn" onclick="addToCart('${p}')">➕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(p) {
+            const type = document.getElementById(`t-${p}`).value;
+            cart.push({ item: p + (type==='м.'?' (отрез)':''), qty: 1, unit: type });
+            document.getElementById('btn-main').innerText = `Далее (Корзина: ${cart.length})`;
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            if(page === 'catalog') {
+                document.getElementById('catalog-page').classList.add('active');
+                document.getElementById('btn-left').style.display = 'none';
+                document.getElementById('btn-main').innerText = `Далее (Корзина: ${cart.length})`;
+            } else {
+                document.getElementById('checkout-page').classList.add('active');
+                document.getElementById('btn-left').style.display = 'block';
+                document.getElementById('btn-main').innerText = `Подтвердить заказ ✅`;
+            }
+        }
+
+        function nextStep() {
+            if (document.getElementById('catalog-page').classList.contains('active')) {
+                if (cart.length === 0) return alert("Выберите товары!");
+                showPage('checkout');
+            } else {
+                sendFinalData();
+            }
+        }
+
+        function sendFinalData() {
+            const userInfo = {
+                name: document.getElementById('f-name').value,
+                phone: document.getElementById('f-phone').value,
+                city: document.getElementById('f-city').value,
+                address: document.getElementById('f-addr').value,
+                delivery_time: document.getElementById('f-time').value,
+                comment: document.getElementById('f-comm').value,
+                delivery_meth: document.getElementById('f-city').value === 'Москва' ? 'Водитель/Такси' : 'Транспортная компания'
+            };
+
+            if(!userInfo.name || !userInfo.phone) return alert("Заполните имя и телефон!");
+            
+            tg.sendData(JSON.stringify({ cart: cart, user_info: userInfo }));
+        }
+
+        renderCatalog();
+    </script>
+</body>
+</html>
