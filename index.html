@@ -3,356 +3,593 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NAR-PPF Store</title>
+    <title>Armotek Catalog</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --primary: #007aff; /* Синий цвет как на сайте/скриншоте */
-            --bg: #f2f2f7;      /* Светло-серый фон */
-            --card: #ffffff;    /* Белые плашки */
-            --text: #000000;
-            --gray-text: #8e8e93;
-            --border: #c6c6c8;
-            --danger: #ff3b30;
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #ffffff;
+            --accent-color: #D4AF37; /* Золотой/Премиум */
+            --secondary-text: #a0a0a0;
+            --danger: #e74c3c;
+            --success: #2ecc71;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0; padding: 0;
-            -webkit-tap-highlight-color: transparent;
-            padding-bottom: 90px; /* Отступ под нижнее меню */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 80px; /* Место под нижнее меню */
         }
 
-        /* Заголовки разделов */
-        .section-header {
-            padding: 20px 16px 8px;
-            font-size: 13px;
-            text-transform: uppercase;
-            color: var(--gray-text);
-            font-weight: 600;
+        /* HEADER */
+        .header {
+            padding: 15px;
+            background: var(--card-bg);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
-
-        /* Табличный блок (как в iOS/Bunch) */
-        .list-group {
-            background: var(--card);
-            border-top: 0.5px solid var(--border);
-            border-bottom: 0.5px solid var(--border);
-            margin-bottom: 20px;
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 10px;
         }
-
-        .list-item {
+        .filters {
             display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-bottom: 0.5px solid #e5e5ea;
-            min-height: 44px;
+            justify-content: center;
+            gap: 10px;
         }
-        
-        .list-item:last-child { border-bottom: none; }
-
-        .item-label { flex: 1; font-size: 17px; font-weight: 500; }
-        
-        /* Элементы управления товаром */
-        .item-controls { display: flex; align-items: center; gap: 10px; }
-
-        .segment-control {
-            display: flex; background: #efeff4;
-            padding: 2px; border-radius: 8px;
+        .filter-btn {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
         }
-        
-        .segment-btn {
-            border: none; background: none;
-            padding: 4px 10px; font-size: 13px; font-weight: 500;
-            border-radius: 6px; cursor: pointer;
-        }
-        
-        .segment-btn.active {
-            background: var(--card);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-            color: var(--primary);
+        .filter-btn.active {
+            background: var(--accent-color);
+            color: #000;
         }
 
-        .qty-input {
-            width: 50px; padding: 6px;
-            text-align: center; border-radius: 8px;
-            border: 1px solid #e5e5ea; font-size: 16px;
-            background: #f9f9f9;
+        /* GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-img {
+            width: 100%;
+            height: 120px;
+            background-color: #333;
+            object-fit: cover;
+        }
+        .card-body {
+            padding: 10px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card-title {
+            font-size: 14px;
+            margin: 0 0 5px 0;
+        }
+        .card-price {
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+        .add-btn {
+            background: var(--accent-color);
+            border: none;
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 10px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        /* Поля ввода */
-        .input-plain {
-            width: 100%; border: none; outline: none;
-            font-size: 17px; background: transparent;
-            text-align: right; color: var(--primary);
-        }
-        .input-plain::placeholder { color: var(--gray-text); }
-        
-        select.input-plain { direction: rtl; appearance: none; }
-
-        /* Нижняя навигация (Tab Bar) */
-        .tab-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(20px);
-            border-top: 0.5px solid #b2b2b2;
-            display: flex; justify-content: space-around;
-            padding-bottom: 20px; /* Для iPhone X+ */
-            padding-top: 10px;
+        /* BOTTOM NAV */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #333;
             z-index: 1000;
         }
-
-        .tab-item {
-            display: flex; flex-direction: column; align-items: center;
-            font-size: 10px; color: var(--gray-text);
-            gap: 4px; cursor: pointer; width: 60px;
+        .nav-item {
+            text-align: center;
+            color: var(--secondary-text);
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .nav-item.active {
+            color: var(--accent-color);
+        }
+        .nav-icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 2px;
         }
 
-        .tab-item.active { color: var(--primary); }
-        
-        .tab-icon { font-size: 24px; line-height: 1; }
+        /* VIEWS */
+        .view { display: none; padding: 10px; }
+        .view.active { display: block; }
 
-        /* Экраны */
-        .screen { display: none; }
-        .screen.active { display: block; animation: fadeIn 0.2s; }
+        /* CART */
+        .cart-item {
+            background: var(--card-bg);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .qty-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .qty-btn {
+            background: #333;
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+        }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Кнопка оформления */
+        /* FORM */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--secondary-text);
+            font-size: 12px;
+        }
+        input, select, textarea {
+            width: 100%;
+            background: #333;
+            border: 1px solid #444;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
         .main-btn {
-            background: var(--primary); color: white;
-            border: none; width: 100%; padding: 16px;
-            border-radius: 12px; font-size: 17px; font-weight: 600;
-            margin-top: 20px; cursor: pointer;
+            background: var(--accent-color);
+            color: #000;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
         }
-        .main-btn:active { opacity: 0.8; }
-
-        .hint-text { padding: 0 16px; font-size: 13px; color: var(--gray-text); margin-bottom: 10px; }
         
-        /* Счетчик в таббаре */
-        .badge {
-            position: absolute; top: -5px; right: 10px;
-            background: var(--danger); color: white;
-            font-size: 10px; padding: 2px 6px; border-radius: 10px;
-            display: none;
-        }
+        .empty-cart { text-align: center; margin-top: 50px; color: var(--secondary-text); }
+        .profile-header { display: flex; align-items: center; margin-bottom: 20px; }
+        .avatar { width: 60px; height: 60px; background: #333; border-radius: 50%; margin-right: 15px; }
+
+        /* CHECKOUT MODAL */
+        #checkout-view { padding-bottom: 100px; }
     </style>
 </head>
 <body>
 
-<div id="tab-menu" class="screen active">
-    <div class="section-header">Каталог пленок</div>
-    <div class="list-group" id="catalog-list">
+    <div class="header">
+        <div class="logo">ARMOTEK FILMS</div>
+        <div id="city-selector" style="font-size: 12px; color: var(--secondary-text); margin-bottom: 10px;">
+            Москва ▼
         </div>
-    <div class="hint-text">Выберите тип (Рулон/Метр) и укажите количество.</div>
-</div>
-
-<div id="tab-cart" class="screen">
-    <div class="section-header">Параметры доставки</div>
-    <div class="list-group">
-        <div class="list-item">
-            <div class="item-label">Город</div>
-            <select id="city" class="input-plain" onchange="toggleCustomCity()">
-                <option value="Москва">Москва</option>
-                <option value="Другой">Другой город</option>
-            </select>
-        </div>
-        <div class="list-item" id="row-custom-city" style="display:none">
-            <div class="item-label">Укажите город</div>
-            <input type="text" id="custom-city" class="input-plain" placeholder="Название">
-        </div>
-        <div class="list-item">
-            <div class="item-label">Адрес *</div>
-            <input type="text" id="address" class="input-plain" placeholder="Улица, дом">
-        </div>
-        <div class="list-item">
-            <div class="item-label">Способ</div>
-            <select id="delivery" class="input-plain">
-                <option value="Водитель">Водитель</option>
-                <option value="Такси">Такси</option>
-                <option value="ТК">СДЭК / ТК</option>
-            </select>
-        </div>
-        <div class="list-item">
-            <div class="item-label">Время</div>
-            <select id="time" class="input-plain">
-                <option value="10-14">10:00 - 14:00</option>
-                <option value="14-18">14:00 - 18:00</option>
-                <option value="Срочно">Как можно скорее</option>
-            </select>
-        </div>
-    </div>
-</div>
-
-<div id="tab-profile" class="screen">
-    <div class="section-header">Контактные данные</div>
-    <div class="list-group">
-        <div class="list-item">
-            <div class="item-label">Имя *</div>
-            <input type="text" id="name" class="input-plain" placeholder="Ваше имя">
-        </div>
-        <div class="list-item">
-            <div class="item-label">Телефон *</div>
-            <input type="tel" id="phone" class="input-plain" placeholder="+7...">
-        </div>
-        <div class="list-item">
-            <div class="item-label">Студия</div>
-            <input type="text" id="studio" class="input-plain" placeholder="Необязательно">
+        <div class="filters" id="catalog-filters">
+            <button class="filter-btn active" onclick="filterBrand('all')">Все</button>
+            <button class="filter-btn" onclick="filterBrand('NAR')">NAR PPF</button>
+            <button class="filter-btn" onclick="filterBrand('Crystal')">Crystal</button>
         </div>
     </div>
 
-    <div class="section-header">Дополнительно</div>
-    <div class="list-group">
-        <div class="list-item">
-            <textarea id="comment" class="input-plain" style="text-align: left; height: 60px;" placeholder="Комментарий к заказу..."></textarea>
+    <div id="catalog-view" class="view active">
+        <div class="grid" id="product-grid">
+            </div>
+    </div>
+
+    <div id="cart-view" class="view">
+        <h2>Корзина</h2>
+        <div id="cart-items"></div>
+        <div id="cart-total" style="margin-top: 20px; font-weight: bold; text-align: right;"></div>
+        <button class="main-btn" onclick="startCheckout()" id="checkout-btn">Перейти к оформлению</button>
+        <button class="main-btn" style="background: #333; color: white; margin-top: 10px;" onclick="switchTab('catalog-view')">Вернуться в каталог</button>
+    </div>
+
+    <div id="profile-view" class="view">
+        <div class="profile-header">
+            <div class="avatar"></div>
+            <div>
+                <h3 id="profile-name">Гость</h3>
+                <span id="profile-city" style="color: var(--accent-color)">Москва</span>
+            </div>
+        </div>
+        <div class="card" style="padding: 15px;">
+            <p>Здесь будет история ваших заказов.</p>
         </div>
     </div>
 
-    <div style="padding: 0 16px;">
-        <button class="main-btn" onclick="submitOrder()">Оформить заказ</button>
+    <div id="about-view" class="view">
+        <h2>О проекте</h2>
+        <p>Мы — Armotek Films. 20 лет на рынке пленок.</p>
+        <p>Прямой дистрибьютор NAR PPF.</p>
+        <p><b>Почему этот бот?</b></p>
+        <ul>
+            <li>Быстрый заказ без звонков</li>
+            <li>Всегда актуальное наличие</li>
+            <li>История заказов под рукой</li>
+        </ul>
     </div>
-</div>
 
-<div class="tab-bar">
-    <div class="tab-item active" onclick="switchTab('menu')">
-        <div class="tab-icon">📑</div>
-        <div>Меню</div>
-    </div>
-    <div class="tab-item" onclick="switchTab('cart')" style="position: relative;">
-        <div class="tab-icon">🛒</div>
-        <div>Корзина</div>
-        <span id="badge" class="badge">0</span>
-    </div>
-    <div class="tab-item" onclick="switchTab('profile')">
-        <div class="tab-icon">👤</div>
-        <div>Профиль</div>
-    </div>
-</div>
+    <div id="checkout-view" class="view">
+        <button onclick="switchTab('cart-view')" style="background:none; border:none; color:var(--accent-color); margin-bottom:15px;">⬅ Назад в корзину</button>
+        
+        <div id="step-1">
+            <h3>1. Заказчик</h3>
+            <div class="form-group">
+                <label>Имя</label>
+                <input type="text" id="cust-name" placeholder="Иван Иванов">
+            </div>
+            <div class="form-group">
+                <label>Телефон</label>
+                <input type="tel" id="cust-phone" placeholder="89990000000">
+            </div>
+            <div class="form-group">
+                <label>Студия (необязательно)</label>
+                <input type="text" id="cust-studio">
+            </div>
+            <button class="main-btn" onclick="nextStep(2)">Далее</button>
+        </div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+        <div id="step-2" style="display:none;">
+            <h3>2. Адрес и Доставка</h3>
+            <div class="form-group">
+                <label>Город</label>
+                <select id="addr-city" onchange="updateProfileCity(this.value)">
+                    <option value="Москва">Москва</option>
+                    <option value="Другой">Другой (СДЭК/ТК)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Улица</label>
+                <input type="text" id="addr-street">
+            </div>
+            <div class="form-group">
+                <label>Дом / Офис</label>
+                <input type="text" id="addr-house">
+            </div>
+            <div class="form-group">
+                <label>Дата доставки</label>
+                <select id="del-date"></select> </div>
+            <div class="form-group">
+                <label>Время</label>
+                <select id="del-time">
+                    </select>
+            </div>
+            <div class="form-group">
+                <label>Комментарий</label>
+                <textarea id="del-comment" rows="3"></textarea>
+            </div>
+            <button class="main-btn" onclick="nextStep(3)">Далее</button>
+        </div>
 
-    // Список товаров (можно расширять)
-    const products = [
-        "Н190", "H190 Long (1.82)", "H210", "Sm 190 (Сатин)", "L190", 
-        "M190 (мат)", "N1", "N2", "N3", "Лобаш", 
-        "Тонер для фар", "Crystal ultra gloss v2"
-    ];
-
-    let cart = {}; // Хранение корзины
-
-    // Инициализация каталога
-    function renderCatalog() {
-        const container = document.getElementById('catalog-list');
-        container.innerHTML = products.map(p => `
-            <div class="list-item">
-                <div class="item-label">${p}</div>
-                <div class="item-controls">
-                    <div class="segment-control">
-                        <button class="segment-btn active" id="btn-r-${p}" onclick="setUnit('${p}', 'рул.')">Рул</button>
-                        <button class="segment-btn" id="btn-m-${p}" onclick="setUnit('${p}', 'м.')">Метр</button>
-                    </div>
-                    <input type="number" id="qty-${p}" class="qty-input" placeholder="0" min="0" onchange="updateCart('${p}')">
+        <div id="step-3" style="display:none;">
+            <h3>3. Получатель</h3>
+            <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="is-me-check" onchange="toggleReceiver()" style="width:20px;">
+                <label style="margin:0;">Я являюсь получателем</label>
+            </div>
+            <div id="receiver-form">
+                <div class="form-group">
+                    <label>Имя получателя</label>
+                    <input type="text" id="rec-name">
+                </div>
+                <div class="form-group">
+                    <label>Телефон получателя</label>
+                    <input type="tel" id="rec-phone">
                 </div>
             </div>
-        `).join('');
-    }
+            <button class="main-btn" onclick="submitOrder()">✅ Подтвердить заказ</button>
+        </div>
+    </div>
 
-    // Логика переключения единиц измерения
-    function setUnit(id, unit) {
-        document.getElementById(`btn-r-${id}`).className = `segment-btn ${unit === 'рул.' ? 'active' : ''}`;
-        document.getElementById(`btn-m-${id}`).className = `segment-btn ${unit === 'м.' ? 'active' : ''}`;
-        updateCart(id);
-    }
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('catalog-view', this)">
+            <span class="nav-icon">📂</span> Каталог
+        </div>
+        <div class="nav-item" onclick="switchTab('cart-view', this)">
+            <span class="nav-icon">🛒</span> Корзина
+        </div>
+        <div class="nav-item" onclick="switchTab('profile-view', this)">
+            <span class="nav-icon">👤</span> Профиль
+        </div>
+        <div class="nav-item" onclick="switchTab('about-view', this)">
+            <span class="nav-icon">ℹ️</span> О проекте
+        </div>
+    </div>
 
-    // Обновление корзины
-    function updateCart(id) {
-        const qty = parseFloat(document.getElementById(`qty-${id}`).value);
-        const unit = document.getElementById(`btn-r-${id}`).classList.contains('active') ? 'рул.' : 'м.';
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
         
-        if (qty > 0) {
-            cart[id] = { qty, unit };
-        } else {
-            delete cart[id];
-        }
-        
-        // Обновление бейджика
-        const count = Object.keys(cart).length;
-        const badge = document.getElementById('badge');
-        badge.innerText = count;
-        badge.style.display = count > 0 ? 'block' : 'none';
-        
-        tg.HapticFeedback.selectionChanged();
-    }
+        // --- DATA ---
+        // Имитация базы данных товаров
+        const products = [
+            { id: 1, brand: 'NAR', name: 'Н190', unit: 'рул.', price: '$$$' },
+            { id: 2, brand: 'NAR', name: 'Н190 (отрез)', unit: 'м.', price: '$$' },
+            { id: 3, brand: 'Crystal', name: 'Crystal Premium 215', unit: 'рул.', price: '$$$' },
+            { id: 4, brand: 'Crystal', name: 'Crystal Matte', unit: 'рул.', price: '$$$' },
+            { id: 5, brand: 'NAR', name: 'Лобаш', unit: 'рул.', price: '$$$' },
+            { id: 6, brand: 'NAR', name: 'Цветная пленка', unit: 'рул.', price: '$$$' }
+        ];
 
-    // Переключение табов
-    function switchTab(tabName) {
-        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
-        
-        document.getElementById(`tab-${tabName}`).classList.add('active');
-        
-        // Подсветка активной иконки
-        const tabIndex = tabName === 'menu' ? 0 : tabName === 'cart' ? 1 : 2;
-        document.querySelectorAll('.tab-item')[tabIndex].classList.add('active');
-    }
+        let cart = [];
+        let userProfile = { city: 'Москва', name: '', phone: '' };
 
-    // Показ поля "Другой город"
-    function toggleCustomCity() {
-        const val = document.getElementById('city').value;
-        document.getElementById('row-custom-city').style.display = (val === 'Другой') ? 'flex' : 'none';
-    }
-
-    // Отправка заказа (с валидацией)
-    function submitOrder() {
-        const name = document.getElementById('name').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const address = document.getElementById('address').value.trim();
-        
-        // 1. Проверка корзины
-        if (Object.keys(cart).length === 0) {
-            tg.showAlert("Корзина пуста! Выберите товары в Меню.");
-            switchTab('menu');
-            return;
-        }
-
-        // 2. Проверка обязательных полей
-        if (!name || !phone || !address) {
-            tg.showAlert("Пожалуйста, заполните Имя, Телефон и Адрес.");
-            if(!address) switchTab('cart');
-            else switchTab('profile');
-            return;
-        }
-
-        // 3. Формирование данных
-        const cityVal = document.getElementById('city').value;
-        const finalCity = cityVal === 'Другой' ? document.getElementById('custom-city').value : cityVal;
-
-        const data = {
-            cart: Object.keys(cart).map(key => ({
-                item: key + (cart[key].unit === 'м.' ? ' (отрез)' : ''),
-                qty: cart[key].qty,
-                unit: cart[key].unit
-            })),
-            user: {
-                name: name,
-                phone: phone,
-                city: finalCity,
-                address: address,
-                studio: document.getElementById('studio').value,
-                delivery: document.getElementById('delivery').value,
-                time: document.getElementById('time').value,
-                comment: document.getElementById('comment').value
+        // --- INIT ---
+        function init() {
+            renderCatalog('all');
+            
+            // Загрузка профиля
+            const saved = localStorage.getItem('armotek_profile');
+            if (saved) {
+                userProfile = JSON.parse(saved);
+                document.getElementById('profile-name').innerText = userProfile.name || tg.initDataUnsafe?.user?.first_name || 'Гость';
+                document.getElementById('profile-city').innerText = userProfile.city;
+                document.getElementById('addr-city').value = userProfile.city;
+                document.getElementById('cust-name').value = userProfile.name || '';
+                document.getElementById('cust-phone').value = userProfile.phone || '';
+            } else if (tg.initDataUnsafe?.user) {
+                document.getElementById('profile-name').innerText = tg.initDataUnsafe.user.first_name;
             }
-        };
 
-        tg.sendData(JSON.stringify(data));
-        tg.close();
-    }
+            // Настройка кнопки "Город" в шапке
+            document.getElementById('city-selector').innerText = userProfile.city + ' ▼';
+        }
 
-    renderCatalog();
-</script>
+        // --- CATALOG LOGIC ---
+        function filterBrand(brand) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderCatalog(brand);
+        }
+
+        function renderCatalog(filter) {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            products.forEach(p => {
+                if (filter !== 'all' && p.brand !== filter) return;
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-img"></div> <div class="card-body">
+                        <div>
+                            <h4 class="card-title">${p.name}</h4>
+                            <span class="card-price">${p.brand}</span>
+                        </div>
+                        <button class="add-btn" onclick="addToCart(${p.id})">В корзину</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- CART LOGIC ---
+        function addToCart(id) {
+            const prod = products.find(p => p.id === id);
+            const existing = cart.find(i => i.id === id);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...prod, qty: 1 });
+            }
+            tg.HapticFeedback.impactOccurred('light');
+            alert('Добавлено в корзину'); // Можно заменить на тост
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            container.innerHTML = '';
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<div class="empty-cart"><h3>Корзина пуста 🛒</h3><p>Перейдите в каталог для выбора товаров</p></div>';
+                document.getElementById('checkout-btn').style.display = 'none';
+                return;
+            }
+            document.getElementById('checkout-btn').style.display = 'block';
+
+            cart.forEach((item, idx) => {
+                const el = document.createElement('div');
+                el.className = 'cart-item';
+                el.innerHTML = `
+                    <div>
+                        <b>${item.name}</b><br>
+                        <small>${item.brand}</small>
+                    </div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="updateQty(${idx}, -1)">-</button>
+                        <span>${item.qty} ${item.unit}</span>
+                        <button class="qty-btn" onclick="updateQty(${idx}, 1)">+</button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function updateQty(idx, change) {
+            cart[idx].qty += change;
+            if (cart[idx].qty <= 0) cart.splice(idx, 1);
+            renderCart();
+        }
+
+        // --- CHECKOUT LOGIC ---
+        function startCheckout() {
+            switchTab('checkout-view');
+            populateDates();
+            document.getElementById('step-1').style.display = 'block';
+            document.getElementById('step-2').style.display = 'none';
+            document.getElementById('step-3').style.display = 'none';
+        }
+
+        function nextStep(step) {
+            if (step === 2) {
+                const name = document.getElementById('cust-name').value;
+                const phone = document.getElementById('cust-phone').value;
+                if (!name || !phone) return alert('Заполните Имя и Телефон');
+                
+                // Сохраняем профиль
+                userProfile.name = name;
+                userProfile.phone = phone;
+                saveProfile();
+
+                document.getElementById('step-1').style.display = 'none';
+                document.getElementById('step-2').style.display = 'block';
+                updateTimeSlots();
+            }
+            if (step === 3) {
+                const street = document.getElementById('addr-street').value;
+                if (!street) return alert('Укажите улицу');
+                document.getElementById('step-2').style.display = 'none';
+                document.getElementById('step-3').style.display = 'block';
+            }
+        }
+
+        function populateDates() {
+            const select = document.getElementById('del-date');
+            select.innerHTML = '';
+            const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+            
+            for(let i=0; i<7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() + i);
+                const dayName = days[d.getDay()];
+                if (d.getDay() === 0) continue; // Skip Sunday
+                
+                const opt = document.createElement('option');
+                opt.value = d.toISOString().split('T')[0]; // YYYY-MM-DD
+                opt.text = `${dayName}, ${d.getDate()}.${d.getMonth()+1}`;
+                select.appendChild(opt);
+            }
+            select.addEventListener('change', updateTimeSlots);
+        }
+
+        function updateTimeSlots() {
+            const dateStr = document.getElementById('del-date').value;
+            const timeSelect = document.getElementById('del-time');
+            timeSelect.innerHTML = '';
+            
+            const d = new Date(dateStr);
+            const isSat = d.getDay() === 6;
+
+            if (isSat) {
+                timeSelect.add(new Option('10:00 - 15:00', '10-15'));
+            } else {
+                timeSelect.add(new Option('10:00 - 14:00', '10-14'));
+                timeSelect.add(new Option('14:00 - 18:00', '14-18'));
+                timeSelect.add(new Option('⚡️ СРОЧНО', 'urgent'));
+            }
+        }
+
+        function toggleReceiver() {
+            const isMe = document.getElementById('is-me-check').checked;
+            const form = document.getElementById('receiver-form');
+            form.style.display = isMe ? 'none' : 'block';
+        }
+
+        function submitOrder() {
+            const isMe = document.getElementById('is-me-check').checked;
+            
+            const orderData = {
+                cart: cart,
+                customer: {
+                    name: document.getElementById('cust-name').value,
+                    phone: document.getElementById('cust-phone').value,
+                    studio: document.getElementById('cust-studio').value
+                },
+                address: {
+                    city: document.getElementById('addr-city').value,
+                    street: document.getElementById('addr-street').value,
+                    house: document.getElementById('addr-house').value
+                },
+                delivery: {
+                    date: document.getElementById('del-date').value,
+                    time: document.getElementById('del-time').value,
+                    type: document.getElementById('del-time').value === 'urgent' ? 'urgent' : 'standard'
+                },
+                comment: document.getElementById('del-comment').value,
+                receiver: {
+                    is_me: isMe,
+                    name: isMe ? '' : document.getElementById('rec-name').value,
+                    phone: isMe ? '' : document.getElementById('rec-phone').value
+                }
+            };
+
+            tg.sendData(JSON.stringify(orderData));
+        }
+
+        // --- UTILS ---
+        function switchTab(viewId, navEl) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            // Скрыть фильтры если не каталог
+            const filters = document.getElementById('catalog-filters');
+            filters.style.display = viewId === 'catalog-view' ? 'flex' : 'none';
+
+            if (navEl) {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                navEl.classList.add('active');
+            }
+
+            if (viewId === 'cart-view') renderCart();
+        }
+
+        function updateProfileCity(city) {
+            userProfile.city = city;
+            saveProfile();
+            document.getElementById('city-selector').innerText = city + ' ▼';
+            document.getElementById('profile-city').innerText = city;
+        }
+
+        function saveProfile() {
+            localStorage.setItem('armotek_profile', JSON.stringify(userProfile));
+        }
+
+        init();
+    </script>
 </body>
 </html>
