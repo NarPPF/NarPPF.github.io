@@ -3,99 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Заказ Пленки</title>
+    <title>NAR-PPF Order System</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #f2f2f7;
-            --block-bg: #ffffff;
-            --text-color: #000000;
-            --hint-color: #8e8e93;
-            --accent-color: #007aff;
-            --separator: #d1d1d6;
+            --nar-blue: #007aff;
+            --nar-bg: #f2f2f7;
+            --nar-white: #ffffff;
+            --nar-border: #d1d1d6;
+            --nar-text: #000000;
+            --nar-hint: #8e8e93;
         }
 
         body {
             font-family: -apple-system, system-ui, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--nar-bg);
+            color: var(--nar-text);
             margin: 0; padding: 0;
-            -webkit-user-select: none;
+            user-select: none;
         }
 
+        /* Заголовок в стиле скриншота */
         .header {
-            padding: 25px 20px 10px;
+            padding: 24px 20px 10px;
+            background: var(--nar-bg);
         }
-        .header h1 { margin: 0; font-size: 30px; font-weight: 800; }
-        .header p { margin: 5px 0 0; color: var(--hint-color); font-size: 15px; }
+        .header h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+        .header p { margin: 4px 0 0; color: var(--nar-hint); font-size: 15px; }
 
-        .content { padding: 10px 16px 150px; }
+        .content { padding: 10px 16px 140px; }
 
-        /* Табличный блок */
-        .table-block {
-            background: var(--block-bg);
+        /* Табличный формат Меню */
+        .table-view {
+            background: var(--nar-white);
             border-radius: 12px;
+            border: 0.5px solid var(--nar-border);
             overflow: hidden;
-            border: 0.5px solid var(--separator);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .table-row {
             display: flex;
             align-items: center;
             padding: 12px 16px;
-            border-bottom: 0.5px solid var(--separator);
-            min-height: 44px;
+            border-bottom: 0.5px solid var(--nar-border);
+            min-height: 50px;
         }
         .table-row:last-child { border-bottom: none; }
 
-        .row-label { flex: 1; font-weight: 500; font-size: 16px; }
+        .row-title { flex: 1; font-weight: 600; font-size: 16px; }
 
-        /* Элементы управления в таблице */
-        .controls { display: flex; align-items: center; gap: 12px; }
-
-        .unit-switch {
+        /* Переключатель Рул/Метр */
+        .unit-toggle {
             display: flex; background: #efeff4;
-            border-radius: 8px; padding: 2px;
+            border-radius: 8px; padding: 2px; margin-right: 12px;
         }
         .u-btn {
             border: none; background: none; padding: 5px 10px;
             font-size: 12px; font-weight: 600; border-radius: 6px;
-            color: #000;
         }
-        .u-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); color: var(--accent-color); }
+        .u-btn.active { background: white; color: var(--nar-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-        input[type="number"] {
+        .qty-input {
             width: 60px; padding: 8px; border-radius: 8px;
-            border: 1px solid var(--separator); text-align: center;
-            font-size: 16px; font-weight: 600;
+            border: 1px solid var(--nar-border); text-align: center;
+            font-weight: 700; font-size: 16px;
         }
 
-        /* Поля ввода в таблице */
-        .form-input {
+        /* Поля ввода (Профиль/Адрес) */
+        .input-field {
             width: 100%; border: none; outline: none;
-            font-size: 16px; padding: 5px 0;
-            background: transparent;
+            font-size: 16px; background: transparent; padding: 8px 0;
         }
-        .field-name {
-            width: 100px; font-size: 14px;
-            color: var(--hint-color); text-transform: uppercase;
-            font-weight: 600;
-        }
+        .field-label { width: 100px; font-size: 13px; color: var(--nar-hint); font-weight: 600; text-transform: uppercase; }
 
-        /* Футер и Кнопки */
-        .footer {
+        /* Нижняя навигация */
+        .bottom-nav {
             position: fixed; bottom: 0; width: 100%;
-            padding: 20px; background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(15px); border-top: 0.5px solid var(--separator);
-            display: flex; gap: 10px; box-sizing: border-box;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(15px);
+            border-top: 0.5px solid var(--nar-border);
+            display: flex; justify-content: space-around;
+            padding: 10px 0 30px;
         }
-        .btn {
-            flex: 1; padding: 16px; border-radius: 12px;
-            font-size: 17px; font-weight: 600; border: none; cursor: pointer;
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: var(--nar-hint); font-size: 10px; font-weight: 500; text-decoration: none;
         }
-        .btn-main { background: var(--accent-color); color: white; }
-        .btn-back { background: #e5e5ea; color: black; }
+        .nav-item.active { color: var(--nar-blue); }
+        .nav-icon { font-size: 24px; margin-bottom: 2px; }
+
+        /* Кнопка "Далее" */
+        .action-bar {
+            position: fixed; bottom: 80px; width: 100%;
+            padding: 0 16px; box-sizing: border-box;
+        }
+        .btn-next {
+            width: 100%; background: var(--nar-blue); color: white;
+            border: none; padding: 16px; border-radius: 14px;
+            font-size: 17px; font-weight: 600; cursor: pointer;
+        }
 
         .step { display: none; }
         .step.active { display: block; }
@@ -103,190 +110,183 @@
 </head>
 <body>
 
-<div class="header">
-    <h1 id="h-title">Меню</h1>
-    <p id="h-desc">Выберите товары для заказа</p>
+<div id="screen-catalog" class="step active">
+    <div class="header">
+        <h1>Меню</h1>
+        <p>Выберите пленку и количество</p>
+    </div>
+    <div class="content">
+        <div class="table-view" id="catalog-list"></div>
+    </div>
 </div>
 
-<div class="content">
-    <div id="step-1" class="step active">
-        <div class="table-block" id="catalog-list">
-            </div>
+<div id="screen-cart" class="step">
+    <div class="header">
+        <h1>Корзина</h1>
+        <p>Параметры получения заказа</p>
     </div>
-
-    <div id="step-2" class="step">
-        <div class="table-block">
+    <div class="content">
+        <div class="table-view">
             <div class="table-row">
-                <div class="field-name">Имя *</div>
-                <input type="text" id="f-name" class="form-input" placeholder="Как к вам обращаться">
-            </div>
-            <div class="table-row">
-                <div class="field-name">Тел *</div>
-                <input type="tel" id="f-phone" class="form-input" placeholder="+7 (___) ___-__-__">
-            </div>
-            <div class="table-row">
-                <div class="field-name">Город *</div>
-                <select id="f-city" class="form-input" onchange="toggleCity()">
-                    <option value="Москва">Москва</option>
-                    <option value="Другой">Другой город</option>
+                <div class="field-label">Город</div>
+                <select id="f-city" class="input-field" onchange="checkCity()">
+                    <option value="Москва">🏙 Москва</option>
+                    <option value="Регион">🌍 Другой город</option>
                 </select>
             </div>
-            <div class="table-row" id="other-city-row" style="display:none">
-                <div class="field-name">Уточните</div>
-                <input type="text" id="f-custom-city" class="form-input" placeholder="Название города">
+            <div class="table-row" id="row-custom-city" style="display:none">
+                <div class="field-label">Уточните</div>
+                <input type="text" id="f-custom-city" class="input-field" placeholder="Название города">
             </div>
             <div class="table-row">
-                <div class="field-name">Адрес *</div>
-                <input type="text" id="f-addr" class="form-input" placeholder="Улица, дом, кв/офис">
+                <div class="field-label">Адрес *</div>
+                <input type="text" id="f-address" class="input-field" placeholder="Улица, дом, кв">
             </div>
             <div class="table-row">
-                <div class="field-name">Студия</div>
-                <input type="text" id="f-studio" class="form-input" placeholder="Название студии">
-            </div>
-        </div>
-    </div>
-
-    <div id="step-3" class="step">
-        <div class="table-block">
-            <div class="table-row">
-                <div class="field-name">Способ</div>
-                <select id="f-delivery" class="form-input">
+                <div class="field-label">Доставка</div>
+                <select id="f-delivery" class="input-field">
                     <option value="Водитель">🚛 Водитель</option>
                     <option value="Такси">🚕 Такси</option>
-                    <option value="ТК">📦 ТК (СДЭК и др.)</option>
+                    <option value="ТК">📦 ТК (СДЭК/ПЭК)</option>
                 </select>
-            </div>
-            <div class="table-row">
-                <div class="field-name">Время</div>
-                <select id="f-time" class="form-input">
-                    <option value="10:00 - 14:00">10:00 - 14:00</option>
-                    <option value="14:00 - 18:00">14:00 - 18:00</option>
-                    <option value="Срочно">🚀 Как можно скорее</option>
-                </select>
-            </div>
-            <div class="table-row" style="height: 100px; align-items: flex-start; padding-top: 10px;">
-                <div class="field-name">Заметка</div>
-                <textarea id="f-comm" class="form-input" style="height: 80px;" placeholder="Дополнительные пожелания..."></textarea>
             </div>
         </div>
     </div>
 </div>
 
-<div class="footer">
-    <button id="b-back" class="btn btn-back" style="display:none" onclick="changeStep(-1)">Назад</button>
-    <button id="b-next" class="btn btn-main" onclick="changeStep(1)">Далее</button>
+<div id="screen-profile" class="step">
+    <div class="header">
+        <h1>Профиль</h1>
+        <p>Данные для оформления</p>
+    </div>
+    <div class="content">
+        <div class="table-view">
+            <div class="table-row">
+                <div class="field-label">Имя *</div>
+                <input type="text" id="f-name" class="input-field" placeholder="Иван Иванов">
+            </div>
+            <div class="table-row">
+                <div class="field-label">Телефон *</div>
+                <input type="tel" id="f-phone" class="input-field" placeholder="+7 (999) 000-00-00">
+            </div>
+            <div class="table-row">
+                <div class="field-label">Студия</div>
+                <input type="text" id="f-studio" class="input-field" placeholder="Название (опционально)">
+            </div>
+            <div class="table-row" style="height: 100px;">
+                <div class="field-label">Заметка</div>
+                <textarea id="f-comm" class="input-field" style="height: 80px;" placeholder="Ваш комментарий..."></textarea>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div class="action-bar">
+    <button class="btn-next" onclick="handleFlow()" id="main-btn">Далее</button>
+</div>
+
+<nav class="bottom-nav">
+    <a href="javascript:void(0)" class="nav-item active" id="nav-1" onclick="showStep(1)">
+        <span class="nav-icon">📋</span>
+        <div>Меню</div>
+    </a>
+    <a href="javascript:void(0)" class="nav-item" id="nav-2" onclick="showStep(2)">
+        <span class="nav-icon">🛒</span>
+        <div>Корзина</div>
+    </a>
+    <a href="javascript:void(0)" class="nav-item" id="nav-3" onclick="showStep(3)">
+        <span class="nav-icon">👤</span>
+        <div>Профиль</div>
+    </a>
+</nav>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    let currentStep = 1;
+    let step = 1;
     let cart = {};
-    const products = [
-        "Н190", "H190 Long (1.82)", "H210", "Sm 190 (Сатин)", "L190", "M190 (мат)", 
-        "N1", "N2", "N3", "Лобаш", "Тонер для фар", "Crystal ultra gloss v2"
-    ];
+    const items = ["Н190", "H190 Long (1.82)", "H210", "Sm 190 (Сатин)", "L190", "M190 (мат)", "N1", "N2", "N3", "Лобаш", "Тонер для фар", "Crystal ultra gloss v2"];
 
-    function renderCatalog() {
-        const container = document.getElementById('catalog-list');
-        container.innerHTML = products.map(p => `
+    function init() {
+        const list = document.getElementById('catalog-list');
+        list.innerHTML = items.map(name => `
             <div class="table-row">
-                <div class="row-label">${p}</div>
-                <div class="controls">
-                    <div class="unit-switch">
-                        <button class="u-btn active" id="btn-r-${p}" onclick="setUnit('${p}','рул.')">рул.</button>
-                        <button class="u-btn" id="btn-m-${p}" onclick="setUnit('${p}','м.')">м.</button>
-                    </div>
-                    <input type="number" id="input-q-${p}" placeholder="0" min="0" step="0.1" onchange="syncCart('${p}')">
+                <div class="row-title">${name}</div>
+                <div class="unit-toggle">
+                    <button class="u-btn active" id="r-${name}" onclick="setU('${name}','рул.')">рул.</button>
+                    <button class="u-btn" id="m-${name}" onclick="setU('${name}','м.')">м.</button>
                 </div>
+                <input type="number" class="qty-input" id="q-${name}" placeholder="0" onchange="sync('${name}')">
             </div>
         `).join('');
     }
 
-    function setUnit(p, u) {
-        document.getElementById(`btn-r-${p}`).classList.toggle('active', u==='рул.');
-        document.getElementById(`btn-m-${p}`).classList.toggle('active', u==='м.');
-        syncCart(p);
+    function setU(n, u) {
+        document.getElementById(`r-${n}`).classList.toggle('active', u==='рул.');
+        document.getElementById(`m-${n}`).classList.toggle('active', u==='м.');
+        sync(n);
     }
 
-    function syncCart(p) {
-        const qty = parseFloat(document.getElementById(`input-q-${p}`).value) || 0;
-        const unit = document.getElementById(`btn-r-${p}`).classList.contains('active') ? 'рул.' : 'м.';
-        if (qty > 0) cart[p] = { qty, unit }; else delete cart[p];
+    function sync(n) {
+        const q = parseFloat(document.getElementById(`q-${n}`).value) || 0;
+        const u = document.getElementById(`r-${n}`).classList.contains('active') ? 'рул.' : 'м.';
+        if(q > 0) cart[n] = { q, u }; else delete cart[n];
         tg.HapticFeedback.selectionChanged();
     }
 
-    function toggleCity() {
-        document.getElementById('other-city-row').style.display = 
-            document.getElementById('f-city').value === 'Другой' ? 'flex' : 'none';
+    function showStep(s) {
+        step = s;
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        
+        if(s===1) document.getElementById('screen-catalog').classList.add('active');
+        if(s===2) document.getElementById('screen-cart').classList.add('active');
+        if(s===3) document.getElementById('screen-profile').classList.add('active');
+        
+        document.getElementById(`nav-${s}`).classList.add('active');
+        document.getElementById('main-btn').innerText = s === 3 ? "Оформить заказ" : "Далее";
     }
 
-    function changeStep(dir) {
-        // Проверка перед переходом
-        if (dir === 1) {
-            if (currentStep === 1 && Object.keys(cart).length === 0) {
-                alert("Выберите хотя бы один товар!"); return;
-            }
-            if (currentStep === 2) {
-                const name = document.getElementById('f-name').value.trim();
-                const phone = document.getElementById('f-phone').value.trim();
-                const addr = document.getElementById('f-addr').value.trim();
-                const cityType = document.getElementById('f-city').value;
-                const customCity = document.getElementById('f-custom-city').value.trim();
-
-                if (!name || !phone || !addr || (cityType === 'Другой' && !customCity)) {
-                    alert("Пожалуйста, заполните все обязательные поля (*)"); 
-                    return;
-                }
-            }
-        }
-
-        currentStep += dir;
-
-        if (currentStep > 3) {
-            submitOrder();
-            return;
-        }
-
-        // Визуальное переключение
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById(`step-${currentStep}`).classList.add('active');
-        
-        document.getElementById('b-back').style.display = currentStep === 1 ? 'none' : 'block';
-        document.getElementById('b-next').innerText = currentStep === 3 ? 'Оформить заказ ✅' : 'Далее';
-        
-        const titles = ["", "Меню", "Контакты", "Доставка"];
-        const descs = ["", "Выберите товары", "Ваши данные", "Способ и время"];
-        document.getElementById('h-title').innerText = titles[currentStep];
-        document.getElementById('h-desc').innerText = descs[currentStep];
+    function checkCity() {
+        document.getElementById('row-custom-city').style.display = 
+            document.getElementById('f-city').value === 'Регион' ? 'flex' : 'none';
     }
 
-    function submitOrder() {
-        // Сбор данных (полная структура из 782.txt)
-        const orderData = {
-            cart: Object.keys(cart).map(k => ({
-                item: k + (cart[k].unit === 'м.' ? ' (отрез)' : ''),
-                qty: cart[k].qty,
-                unit: cart[k].unit
-            })),
+    function handleFlow() {
+        if(step < 3) {
+            showStep(step + 1);
+        } else {
+            submit();
+        }
+    }
+
+    function submit() {
+        // ВАЛИДАЦИЯ
+        const name = document.getElementById('f-name').value;
+        const phone = document.getElementById('f-phone').value;
+        const addr = document.getElementById('f-address').value;
+        
+        if(Object.keys(cart).length === 0) return alert("Корзина пуста!");
+        if(!name || !phone || !addr) return alert("Заполните обязательные поля (*) в Профиле и Корзине!");
+
+        const data = {
+            cart: Object.keys(cart).map(k => ({ item: k + (cart[k].u==='м.'?' (отрез)':''), qty: cart[k].q, unit: cart[k].u })),
             user: {
-                name: document.getElementById('f-name').value,
-                phone: document.getElementById('f-phone').value,
+                name: name,
+                phone: phone,
                 city: document.getElementById('f-city').value === 'Москва' ? 'Москва' : document.getElementById('f-custom-city').value,
-                address: document.getElementById('f-addr').value,
+                address: addr,
                 studio: document.getElementById('f-studio').value,
                 delivery: document.getElementById('f-delivery').value,
-                time: document.getElementById('f-time').value,
                 comment: document.getElementById('f-comm').value
             }
         };
-
-        tg.sendData(JSON.stringify(orderData)); // Отправка данных в бот
-        tg.close(); // Закрытие окна
+        tg.sendData(JSON.stringify(data));
+        tg.close();
     }
 
-    renderCatalog();
+    init();
 </script>
 </body>
 </html>
