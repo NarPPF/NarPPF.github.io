@@ -1,94 +1,147 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Armotek Catalog</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-body { background:#121212; color:white; font-family:sans-serif; margin:0 }
-.header { padding:15px; background:#1e1e1e; text-align:center }
-#city-selector { cursor:pointer; color:#D4AF37; font-size:13px }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px }
-.card { background:#1e1e1e; padding:10px; border-radius:8px }
-button { background:#D4AF37; border:none; padding:10px; width:100% }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Armotek Catalog</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #ffffff;
+            --accent-color: #D4AF37;
+            --secondary-text: #a0a0a0;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0; padding: 0; padding-bottom: 80px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* УБРАНО РАЗМЫТИЕ ЦЕН ДЛЯ ДИЛЕРОВ */
+        .price-value.dealer-price {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .view { display: none; padding: 15px; }
+        .view.active { display: block; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+
+        .main-btn {
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            background: #2e2e2e;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .nav-bar {
+            position: fixed; bottom: 0; width: 100%;
+            background: #1a1a1a; display: flex;
+            justify-content: space-around; padding: 10px 0;
+            border-top: 1px solid #333;
+        }
+    </style>
 </head>
-
 <body>
-<div class="header">
-    <b>ARMOTEK FILMS</b><br>
-    <div id="city-selector" onclick="openCityModal()">Москва ▼</div>
-    <div id="delivery-info" style="font-size:11px;color:#777">
-        Доставка по Москве — бесплатно
+
+    <div id="catalog-view" class="view active">
+        <h2 style="color: var(--accent-color)">Armotek</h2>
+        <div id="product-list">
+            <p>Загрузка товаров...</p>
+        </div>
     </div>
-</div>
 
-<div class="grid" id="grid"></div>
+    <div id="checkout-view" class="view">
+        <h2>Оформление заказа</h2>
+        <div id="cart-items" class="card"></div>
+        
+        <div class="card">
+            <label>📍 Ваш город (подтвержден в боте):</label>
+            <input type="text" id="order-city" value="Москва" readonly>
+            
+            <label style="display:block; margin-top:15px;">💳 Способ оплаты:</label>
+            <select id="pay-method">
+                <option value="cashless">Безналичный расчет (Счет)</option>
+                <option value="qr">Оплата по QR-коду / СБП</option>
+            </select>
+        </div>
 
-<script>
-const tg = window.Telegram.WebApp;
-tg.expand();
+        <div style="padding: 10px; color: var(--secondary-text); font-size: 13px;">
+            * Доставка по Москве бесплатно. По РФ — по тарифам ТК.
+        </div>
 
-let userProfile = { city: "Москва" };
+        <button class="main-btn" onclick="submitOrder()">✅ Отправить заказ менеджеру</button>
+    </div>
 
-const cities = [
- "Москва","Санкт-Петербург","Казань","Екатеринбург",
- "Новосибирск","Краснодар","Ростов-на-Дону"
-];
+    <div class="nav-bar">
+        <button onclick="showView('catalog-view')">🏠 Каталог</button>
+        <button onclick="showView('checkout-view')">🛒 Корзина</button>
+    </div>
 
-const products = [
- {id:1,name:"NAR PPF H190",price:45000},
- {id:2,name:"Crystal Matte",price:30000}
-];
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
 
-let cart = [];
+        let cart = [];
 
-function openCityModal() {
- const city = prompt("Выберите город:", userProfile.city);
- if (city && cities.includes(city)) {
-   userProfile.city = city;
-   document.getElementById("city-selector").innerText = city + " ▼";
-   document.getElementById("delivery-info").innerText =
-     city === "Москва"
-     ? "Доставка по Москве — бесплатно"
-     : "Доставка — по тарифу ТК";
- }
-}
+        function showView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
 
-function render() {
- const g = document.getElementById("grid");
- g.innerHTML = "";
- products.forEach(p=>{
-   const d = document.createElement("div");
-   d.className="card";
-   d.innerHTML = `
-     <b>${p.name}</b><br>
-     ${p.price} ₽<br><br>
-     <button onclick="add(${p.id})">В корзину</button>
-   `;
-   g.appendChild(d);
- });
-}
+        // Пример функции отправки (Та самая логика JS)
+        function submitOrder() {
+            if (cart.length === 0) {
+                alert("Корзина пуста!");
+                return;
+            }
 
-function add(id) {
- const p = products.find(x=>x.id===id);
- cart.push({...p, qty:1});
- alert("Добавлено");
- sendOrder();
-}
+            let data = {
+                cart: cart,
+                total_price: 15000, // Тут будет твоя функция расчета
+                city: document.getElementById('order-city').value,
+                pay_method: document.getElementById('pay-method').value
+            };
 
-function sendOrder() {
- const data = {
-   cart: cart,
-   total_price: cart.reduce((a,c)=>a+c.price,0),
-   delivery_price_info:
-     userProfile.city==="Москва"?"free_moscow":"tk_tariff"
- };
- tg.sendData(JSON.stringify(data));
-}
+            tg.sendData(JSON.stringify(data));
+            tg.close();
+        }
 
-render();
-</script>
+        // Инициализация (заглушка для теста)
+        window.onload = () => {
+            // Здесь будет подгрузка товаров из твоего inventory.json
+            console.log("Приложение запущено");
+        };
+    </script>
 </body>
 </html>
