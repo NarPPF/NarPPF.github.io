@@ -68,15 +68,49 @@
 
 <div id="product-grid"></div>
 
+<!-- ===== БЛОК ДОСТАВКИ ===== -->
+<div style="padding:12px;background:#fff;margin-top:12px;border-top:1px solid #eee;">
+
+    <h3 style="margin:0 0 12px 0;">Доставка</h3>
+
+    <div style="margin-bottom:10px;">
+        <label>Город</label><br>
+        <select id="city" style="width:100%;padding:8px;">
+            <option value="Москва">Москва</option>
+            <option value="СПб">Санкт-Петербург</option>
+            <option value="Регионы">Регионы</option>
+        </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Тип доставки</label><br>
+        <select id="deliveryType" style="width:100%;padding:8px;">
+            <option value="courier">Курьер</option>
+            <option value="cdek">СДЭК</option>
+            <option value="pickup">Самовывоз</option>
+        </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Дата</label><br>
+        <select id="deliveryDate" style="width:100%;padding:8px;"></select>
+    </div>
+
+    <div>
+        <label>Время</label><br>
+        <select id="deliveryTime" style="width:100%;padding:8px;"></select>
+    </div>
+
+</div>
+<!-- ===== /БЛОК ДОСТАВКИ ===== -->
+
 <script>
 (function () {
 
-    /* ===== TELEGRAM INIT ===== */
     if (window.Telegram && window.Telegram.WebApp) {
         Telegram.WebApp.expand();
     }
 
-    /* ===== DATA ===== */
     var products = [
         { id: 1, brand: 'NAR', name: 'NAR PPF 190' },
         { id: 2, brand: 'NAR', name: 'NAR PPF 215' },
@@ -84,7 +118,6 @@
         { id: 4, brand: 'Crystal', name: 'Crystal Matte' }
     ];
 
-    /* ===== FILTER ===== */
     window.filterBrand = function (brand) {
         var btns = document.getElementsByClassName('filter-btn');
         for (var i = 0; i < btns.length; i++) {
@@ -98,7 +131,6 @@
         renderCatalog(brand);
     };
 
-    /* ===== RENDER ===== */
     function renderCatalog(filter) {
         var grid = document.getElementById('product-grid');
         grid.innerHTML = '';
