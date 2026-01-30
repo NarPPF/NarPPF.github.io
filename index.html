@@ -1,130 +1,230 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>NAR PPF Admin</title>
-<style>
-body {
-  font-family: Inter, Arial;
-  background: #f2f4f7;
-  padding: 20px;
-}
-h1 { margin-bottom: 20px; }
-.card {
-  background: #fff;
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-th, td {
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
-}
-input {
-  width: 100%;
-  padding: 6px;
-}
-button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  background: #000;
-  color: #fff;
-  cursor: pointer;
-}
-button:hover { opacity: 0.85; }
-</style>
-</head>
-<body>
-
-<h1>NAR PPF — Админка</h1>
-
-<div class="card">
-<h3>Каталог</h3>
-<table id="catalog"></table>
-</div>
-
-<div class="card">
-<h3>Прайсы</h3>
-<div id="prices"></div>
-</div>
-
-<div class="card">
-<h3>Пользователи</h3>
-<table id="users"></table>
-</div>
-
-<button onclick="save()">💾 Сохранить изменения</button>
-
 <script>
-const token = new URLSearchParams(location.search).get("token");
-let catalog = {}, prices = {}, users = {};
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-async function loadData() {
-  const r = await fetch(`/admin/data?token=${token}`);
-  const d = await r.json();
-  catalog = d.catalog;
-  prices = d.prices;
-  users = d.users;
-  render();
-}
+    /* ================= НАСТРОЙКИ ДОСТАВКИ ================= */
 
-function render() {
-  const c = document.getElementById("catalog");
-  c.innerHTML = "<tr><th>Код</th><th>Название</th><th>Активен</th></tr>";
-  for (let k in catalog) {
-    const p = catalog[k];
-    c.innerHTML += `
-      <tr>
-        <td>${k}</td>
-        <td><input value="${p.name}" onchange="catalog['${k}'].name=this.value"></td>
-        <td><input type="checkbox" ${p.active ? "checked" : ""} onchange="catalog['${k}'].active=this.checked"></td>
-      </tr>`;
-  }
+    const DELIVERY_RULES = {
+        bigOrder: {
+            maxUrgentRolls: 2,
+            maxUrgentMeters: 15
+        }
+    };
 
-  const pr = document.getElementById("prices");
-  pr.innerHTML = "";
-  for (let t in prices) {
-    pr.innerHTML += `<h4>${t}</h4>`;
-    for (let k in prices[t]) {
-      pr.innerHTML += `${k}: <input type="number" value="${prices[t][k]}"
-        onchange="prices['${t}']['${k}']=+this.value"><br>`;
+    /* ================= ДАННЫЕ ================= */
+
+    const products = [
+        { id: 1, brand: 'NAR', name: 'Н190', unit: 'рул.', price: '$$$' },
+        { id: 2, brand: 'NAR', name: 'Н190 (отрез)', unit: 'м.', price: '$$' },
+        { id: 3, brand: 'Crystal', name: 'Crystal Premium 215', unit: 'рул.', price: '$$$' },
+        { id: 4, brand: 'Crystal', name: 'Crystal Matte', unit: 'рул.', price: '$$$' },
+        { id: 5, brand: 'NAR', name: 'Лобаш', unit: 'рул.', price: '$$$' },
+        { id: 6, brand: 'NAR', name: 'Цветная пленка', unit: 'рул.', price: '$$$' }
+    ];
+
+    let cart = [];
+    let userProfile = { city: 'Москва', name: '', phone: '' };
+
+    /* ================= INIT ================= */
+
+    function init() {
+        renderCatalog('all');
+
+        const saved = localStorage.getItem('armotek_profile');
+        if (saved) {
+            userProfile = JSON.parse(saved);
+            document.getElementById('profile-name').innerText = userProfile.name || 'Гость';
+            document.getElementById('profile-city').innerText = userProfile.city;
+            document.getElementById('addr-city').value = userProfile.city;
+            document.getElementById('cust-name').value = userProfile.name || '';
+            document.getElementById('cust-phone').value = userProfile.phone || '';
+        }
+
+        document.getElementById('city-selector').innerText = userProfile.city + ' ▼';
     }
-  }
 
-  const u = document.getElementById("users");
-  u.innerHTML = "<tr><th>ID</th><th>Прайс</th></tr>";
-  for (let id in users) {
-    u.innerHTML += `
-      <tr>
-        <td>${id}</td>
-        <td><input value="${users[id].price_type || ''}"
-        onchange="users['${id}'].price_type=this.value"></td>
-      </tr>`;
-  }
-}
+    /* ================= КАТАЛОГ ================= */
 
-async function save() {
-  for (const file of ["catalog.json", "prices.json", "users.json"]) {
-    await fetch(`/admin/save?token=${token}`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        file: file,
-        content: file === "catalog.json" ? catalog :
-                 file === "prices.json" ? prices : users
-      })
-    });
-  }
-  alert("Сохранено");
-}
+    function filterBrand(brand, btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCatalog(brand);
+    }
 
-loadData();
+    function renderCatalog(filter) {
+        const grid = document.getElementById('product-grid');
+        grid.innerHTML = '';
+
+        products.forEach(p => {
+            if (filter !== 'all' && p.brand !== filter) return;
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-img"></div>
+                <div class="card-body">
+                    <div>
+                        <h4 class="card-title">${p.name}</h4>
+                        <span class="card-price">${p.brand}</span>
+                    </div>
+                    <button class="add-btn" onclick="addToCart(${p.id})">В корзину</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    /* ================= КОРЗИНА ================= */
+
+    function addToCart(id) {
+        const prod = products.find(p => p.id === id);
+        const existing = cart.find(i => i.id === id);
+
+        if (existing) existing.qty++;
+        else cart.push({ ...prod, qty: 1 });
+
+        tg.HapticFeedback?.impactOccurred('light');
+        renderCart();
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cart-items');
+        container.innerHTML = '';
+
+        if (cart.length === 0) {
+            container.innerHTML = '<div class="empty-cart"><h3>Корзина пуста 🛒</h3></div>';
+            document.getElementById('checkout-btn').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('checkout-btn').style.display = 'block';
+
+        cart.forEach((item, idx) => {
+            const el = document.createElement('div');
+            el.className = 'cart-item';
+            el.innerHTML = `
+                <div>
+                    <b>${item.name}</b><br>
+                    <small>${item.brand}</small>
+                </div>
+                <div class="qty-control">
+                    <button class="qty-btn" onclick="updateQty(${idx}, -1)">-</button>
+                    <span>${item.qty} ${item.unit}</span>
+                    <button class="qty-btn" onclick="updateQty(${idx}, 1)">+</button>
+                </div>
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    function updateQty(idx, change) {
+        cart[idx].qty += change;
+        if (cart[idx].qty <= 0) cart.splice(idx, 1);
+        renderCart();
+    }
+
+    /* ================= УМНАЯ ДОСТАВКА ================= */
+
+    function isBigOrder() {
+        let rolls = 0;
+        let meters = 0;
+
+        cart.forEach(item => {
+            if (item.unit.includes('рул')) rolls += item.qty;
+            if (item.unit.includes('м')) meters += item.qty;
+        });
+
+        return (
+            rolls > DELIVERY_RULES.bigOrder.maxUrgentRolls ||
+            meters > DELIVERY_RULES.bigOrder.maxUrgentMeters
+        );
+    }
+
+    function isMoscowDelivery() {
+        return document.getElementById('addr-city').value === 'Москва';
+    }
+
+    function hasAvailableSlots(date) {
+        const now = new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        const hour = now.getHours();
+        const day = date.getDay();
+
+        if (!isToday) return true;
+        if (day === 6) return hour < 14;
+        return hour < 18;
+    }
+
+    function populateDates() {
+        const select = document.getElementById('del-date');
+        select.innerHTML = '';
+
+        const now = new Date();
+        const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(now.getDate() + i);
+
+            const day = d.getDay();
+            if (day === 0) continue;
+            if (i === 0 && !hasAvailableSlots(d)) continue;
+
+            const opt = document.createElement('option');
+            opt.value = d.toISOString().split('T')[0];
+            opt.text = `${days[day]}, ${d.getDate()}.${d.getMonth() + 1}`;
+            select.appendChild(opt);
+        }
+
+        updateTimeSlots();
+    }
+
+    function updateTimeSlots() {
+        const dateStr = document.getElementById('del-date').value;
+        const timeSelect = document.getElementById('del-time');
+        timeSelect.innerHTML = '';
+
+        if (!dateStr) return;
+
+        if (!isMoscowDelivery()) {
+            timeSelect.add(new Option('Передача в ТК (в течение дня)', 'tk'));
+            return;
+        }
+
+        const selectedDate = new Date(dateStr);
+        const now = new Date();
+        const isToday = selectedDate.toDateString() === now.toDateString();
+        const day = selectedDate.getDay();
+        const hour = now.getHours();
+        const bigOrder = isBigOrder();
+
+        if (day === 6) {
+            if (!isToday || hour < 13) {
+                timeSelect.add(new Option('10:00 – 15:00', '10-15'));
+            }
+            return;
+        }
+
+        if (!isToday || hour < 10) {
+            timeSelect.add(new Option('10:00 – 14:00', '10-14'));
+        }
+
+        if ((!isToday || hour < 14) && !bigOrder) {
+            timeSelect.add(new Option('14:00 – 18:00', '14-18'));
+        }
+
+        if (isToday && hour < 15 && !bigOrder) {
+            timeSelect.add(new Option('⚡ Срочно (сегодня)', 'urgent'));
+        }
+    }
+
+    function updateProfileCity(city) {
+        userProfile.city = city;
+        localStorage.setItem('armotek_profile', JSON.stringify(userProfile));
+        document.getElementById('city-selector').innerText = city + ' ▼';
+        document.getElementById('profile-city').innerText = city;
+        updateTimeSlots();
+    }
+
+    init();
 </script>
-
-</body>
-</html>
