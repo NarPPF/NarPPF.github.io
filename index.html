@@ -1,6 +1,6 @@
 <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    const tg = window.Telegram?.WebApp || { expand(){}, HapticFeedback:null };
+    tg.expand?.();
 
     /* ================= НАСТРОЙКИ ДОСТАВКИ ================= */
 
@@ -45,9 +45,19 @@
 
     /* ================= КАТАЛОГ ================= */
 
-    function filterBrand(brand, btn) {
+    function filterBrand(brand) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+
+        const buttons = document.querySelectorAll('.filter-btn');
+        buttons.forEach(btn => {
+            if (
+                (brand === 'all' && btn.textContent.includes('Все')) ||
+                btn.textContent.includes(brand)
+            ) {
+                btn.classList.add('active');
+            }
+        });
+
         renderCatalog(brand);
     }
 
@@ -134,10 +144,7 @@
             if (item.unit.includes('м')) meters += item.qty;
         });
 
-        return (
-            rolls > DELIVERY_RULES.bigOrder.maxUrgentRolls ||
-            meters > DELIVERY_RULES.bigOrder.maxUrgentMeters
-        );
+        return rolls > 2 || meters > 15;
     }
 
     function isMoscowDelivery() {
