@@ -3,145 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Armotek Catalog</title>
+    <title>Armotek</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #ffffff;
-            --accent-color: #D4AF37;
-            --secondary-text: #a0a0a0;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0; padding: 0; padding-bottom: 80px;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* УБРАНО РАЗМЫТИЕ ЦЕН ДЛЯ ДИЛЕРОВ */
-        .price-value.dealer-price {
-            color: var(--accent-color);
-            font-weight: bold;
-        }
-
-        .view { display: none; padding: 15px; }
+        :root { --accent: #D4AF37; --bg: #000; --card: #111; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 90px; }
+        .view { display: none; padding: 20px; animation: fadeIn 0.3s; }
         .view.active { display: block; }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #333;
-        }
-
-        .main-btn {
-            background: var(--accent-color);
-            color: #000;
-            border: none;
-            border-radius: 12px;
-            padding: 15px;
-            width: 100%;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        select, input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            background: #2e2e2e;
-            color: white;
-            border: 1px solid #444;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        .nav-bar {
-            position: fixed; bottom: 0; width: 100%;
-            background: #1a1a1a; display: flex;
-            justify-content: space-around; padding: 10px 0;
-            border-top: 1px solid #333;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid #222; }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); border-top: 1px solid #222; z-index: 100; }
+        .nav-item { flex: 1; padding: 18px; text-align: center; color: #555; background: none; border: none; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-item.active { color: var(--accent); }
+        .main-btn { background: var(--accent); color: #000; width: 100%; padding: 18px; border-radius: 14px; font-weight: 800; border: none; cursor: pointer; }
+        input, select { width: 100%; padding: 14px; margin-top: 8px; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 10px; }
+        /* Карта как в топовых сервисах - скрыта пока не нужна */
+        #map-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; }
     </style>
 </head>
 <body>
 
     <div id="catalog-view" class="view active">
-        <h2 style="color: var(--accent-color)">Armotek</h2>
-        <div id="product-list">
-            <p>Загрузка товаров...</p>
-        </div>
+        <h1 style="color:var(--accent); font-size: 24px;">Armotek Catalog</h1>
+        <div id="products"></div>
     </div>
 
-    <div id="checkout-view" class="view">
-        <h2>Оформление заказа</h2>
-        <div id="cart-items" class="card"></div>
-        
+    <div id="cart-view" class="view">
+        <h2>Ваш заказ</h2>
         <div class="card">
-            <label>📍 Ваш город (подтвержден в боте):</label>
-            <input type="text" id="order-city" value="Москва" readonly>
-            
-            <label style="display:block; margin-top:15px;">💳 Способ оплаты:</label>
-            <select id="pay-method">
-                <option value="cashless">Безналичный расчет (Счет)</option>
-                <option value="qr">Оплата по QR-коду / СБП</option>
-            </select>
+            <label>📍 Адрес доставки:</label>
+            <input type="text" id="addr-field" placeholder="Введите адрес или выберите на карте">
+            <button class="main-btn" style="background:#222; color:var(--accent); margin-top:10px;" onclick="openMap()">🗺 Выбрать на карте</button>
         </div>
-
-        <div style="padding: 10px; color: var(--secondary-text); font-size: 13px;">
-            * Доставка по Москве бесплатно. По РФ — по тарифам ТК.
+        <div class="card">
+            <label>💳 Оплата:</label>
+            <select id="pay-method"><option value="qr">QR-код / СБП</option><option value="cashless">Счет для юрлиц</option></select>
         </div>
-
-        <button class="main-btn" onclick="submitOrder()">✅ Отправить заказ менеджеру</button>
+        <button class="main-btn" onclick="checkout()">🚀 Оформить заказ</button>
     </div>
 
-    <div class="nav-bar">
-        <button onclick="showView('catalog-view')">🏠 Каталог</button>
-        <button onclick="showView('checkout-view')">🛒 Корзина</button>
+    <div id="profile-view" class="view">
+        <h2>Профиль</h2>
+        <div class="card">
+            <label>Телефон:</label><input type="tel" id="u-phone" onchange="autoSave()">
+            <label style="margin-top:10px; display:block">Город:</label><input type="text" id="u-city" onchange="autoSave()">
+        </div>
+    </div>
+
+    <div id="map-container">
+        <div id="map" style="width: 100%; height: 85%;"></div>
+        <div style="padding: 20px;">
+            <button class="main-btn" onclick="closeMap()">Подтвердить адрес</button>
+        </div>
+    </div>
+
+    <div class="nav">
+        <button class="nav-item active" onclick="tab('catalog-view', this)">Каталог</button>
+        <button class="nav-item" onclick="tab('cart-view', this)">Корзина</button>
+        <button class="nav-item" onclick="tab('profile-view', this)">Профиль</button>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        let cart = [];
-
-        function showView(id) {
+        function tab(id, el) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
         }
 
-        // Пример функции отправки (Та самая логика JS)
-        function submitOrder() {
-            if (cart.length === 0) {
-                alert("Корзина пуста!");
-                return;
-            }
+        function openMap() { document.getElementById('map-container').style.display = 'block'; }
+        function closeMap() { document.getElementById('map-container').style.display = 'none'; }
 
-            let data = {
-                cart: cart,
-                total_price: 15000, // Тут будет твоя функция расчета
-                city: document.getElementById('order-city').value,
-                pay_method: document.getElementById('pay-method').value
-            };
+        ymaps.ready(() => {
+            let m = new ymaps.Map('map', { center: [55.75, 37.62], zoom: 10 });
+            m.events.add('click', e => {
+                ymaps.geocode(e.get('coords')).then(res => {
+                    let addr = res.geoObjects.get(0).getAddressLine();
+                    document.getElementById('addr-field').value = addr;
+                    autoSave();
+                });
+            });
+        });
 
-            tg.sendData(JSON.stringify(data));
+        function autoSave() {
+            tg.sendData(JSON.stringify({
+                action: 'save_only',
+                profile: { 
+                    phone: document.getElementById('u-phone').value, 
+                    city: document.getElementById('u-city').value, 
+                    address: document.getElementById('addr-field').value 
+                }
+            }));
+        }
+
+        function checkout() {
+            tg.sendData(JSON.stringify({
+                cart: [], total_price: 15000,
+                address: document.getElementById('addr-field').value,
+                pay_method: document.getElementById('pay-method').value,
+                profile: { phone: document.getElementById('u-phone').value, city: document.getElementById('u-city').value, address: document.getElementById('addr-field').value }
+            }));
             tg.close();
         }
-
-        // Инициализация (заглушка для теста)
-        window.onload = () => {
-            // Здесь будет подгрузка товаров из твоего inventory.json
-            console.log("Приложение запущено");
-        };
     </script>
 </body>
 </html>
