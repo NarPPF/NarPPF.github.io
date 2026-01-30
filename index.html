@@ -1,666 +1,94 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Armotek Catalog</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #ffffff;
-            --accent-color: #D4AF37;
-            --secondary-text: #a0a0a0;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-            --blur-strength: 8px;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            padding-bottom: 80px;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* TOAST NOTIFICATION */
-        #toast-container {
-            position: fixed;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-            width: 90%;
-            max-width: 350px;
-        }
-        .toast {
-            background: rgba(30, 30, 30, 0.95);
-            border-left: 4px solid var(--accent-color);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            font-size: 14px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            backdrop-filter: blur(4px);
-        }
-        .toast.show { opacity: 1; transform: translateY(0); }
-        .toast.success { border-color: var(--success); }
-        .toast.error { border-color: var(--danger); }
-
-        /* HEADER */
-        .header {
-            padding: 15px;
-            background: var(--card-bg);
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-        .logo { font-size: 20px; font-weight: bold; color: var(--accent-color); margin-bottom: 10px; letter-spacing: 1px; }
-        .filters { display: flex; justify-content: center; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
-        .filter-btn {
-            background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);
-            padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; white-space: nowrap; transition: 0.2s;
-        }
-        .filter-btn.active { background: var(--accent-color); color: #000; }
-
-        /* STEPPER (PROGRESS BAR) */
-        .stepper {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            position: relative;
-        }
-        .stepper::before {
-            content: ''; position: absolute; top: 14px; left: 0; width: 100%; height: 2px; background: #333; z-index: 0;
-        }
-        .step {
-            position: relative; z-index: 1; text-align: center; width: 33%;
-        }
-        .step-circle {
-            width: 30px; height: 30px; background: #333; border-radius: 50%; margin: 0 auto 5px;
-            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #777;
-            border: 2px solid var(--bg-color); transition: 0.3s;
-        }
-        .step.active .step-circle { background: var(--accent-color); color: #000; }
-        .step.completed .step-circle { background: var(--success); color: white; }
-        .step-label { font-size: 10px; color: #777; }
-        .step.active .step-label { color: var(--accent-color); }
-
-        /* GRID */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
-        .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; position: relative; }
-        .card-img {
-            width: 100%; height: 120px; background-color: #333; object-fit: cover;
-            display: flex; align-items: center; justify-content: center; color: #555; font-size: 12px;
-        }
-        .card-body { padding: 10px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .card-title { font-size: 14px; margin: 0 0 5px 0; line-height: 1.2; }
-        
-        /* PRICES */
-        .price-container { margin-bottom: 8px; }
-        .card-price { font-size: 13px; color: var(--secondary-text); }
-        .dealer-price {
-            color: var(--success); font-weight: bold; font-size: 14px; filter: blur(var(--blur-strength));
-            transition: filter 0.2s; cursor: pointer; user-select: none;
-        }
-        .dealer-price:active, .dealer-price.revealed { filter: blur(0); }
-
-        .add-btn {
-            background: var(--accent-color); border: none; width: 100%; padding: 10px; border-radius: 5px;
-            margin-top: 5px; color: #000; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s;
-        }
-        .add-btn:active { transform: scale(0.98); }
-
-        /* BOTTOM NAV */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg);
-            display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; z-index: 1000;
-        }
-        .nav-item { text-align: center; color: var(--secondary-text); font-size: 10px; cursor: pointer; flex: 1; position: relative; }
-        .nav-item.active { color: var(--accent-color); }
-        .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
-        
-        /* BADGE ANIMATION */
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
-        .badge-anim { animation: pop 0.3s ease; }
-
-        /* VIEWS */
-        .view { display: none; padding: 10px; animation: fadeIn 0.3s; }
-        .view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* CART & FORM */
-        .cart-item { background: var(--card-bg); padding: 10px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .qty-control { display: flex; align-items: center; gap: 10px; }
-        .qty-btn { background: #333; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: var(--secondary-text); font-size: 12px; }
-        input, select, textarea {
-            width: 100%; background: #333; border: 1px solid #444; color: white; padding: 12px;
-            border-radius: 8px; box-sizing: border-box; font-size: 14px; outline: none; transition: border 0.2s;
-        }
-        input:focus, select:focus, textarea:focus { border-color: var(--accent-color); }
-        input.error { border-color: var(--danger); }
-        .main-btn {
-            background: var(--accent-color); color: #000; width: 100%; padding: 15px; border: none;
-            border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer;
-        }
-        
-        .empty-cart { text-align: center; margin-top: 50px; color: var(--secondary-text); }
-        .profile-header { display: flex; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px; border-radius: 10px; }
-        .avatar { width: 50px; height: 50px; background: #333; border-radius: 50%; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        #checkout-view { padding-bottom: 100px; }
-        .role-badge { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Armotek Catalog</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body { background:#121212; color:white; font-family:sans-serif; margin:0 }
+.header { padding:15px; background:#1e1e1e; text-align:center }
+#city-selector { cursor:pointer; color:#D4AF37; font-size:13px }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px }
+.card { background:#1e1e1e; padding:10px; border-radius:8px }
+button { background:#D4AF37; border:none; padding:10px; width:100% }
+</style>
 </head>
+
 <body>
-
-    <div id="toast-container"></div>
-
-    <div class="header">
-        <div class="logo">ARMOTEK FILMS</div>
-        <div id="city-selector" style="font-size: 12px; color: var(--secondary-text); margin-bottom: 10px;">Москва ▼</div>
-        <div class="filters" id="catalog-filters">
-            <button class="filter-btn active" onclick="filterBrand('all')">Все</button>
-            <button class="filter-btn" onclick="filterBrand('NAR')">NAR PPF</button>
-            <button class="filter-btn" onclick="filterBrand('Crystal')">Crystal</button>
-            <button class="filter-btn" onclick="filterBrand('Tools')">Инструмент</button>
-        </div>
+<div class="header">
+    <b>ARMOTEK FILMS</b><br>
+    <div id="city-selector" onclick="openCityModal()">Москва ▼</div>
+    <div id="delivery-info" style="font-size:11px;color:#777">
+        Доставка по Москве — бесплатно
     </div>
+</div>
 
-    <div id="catalog-view" class="view active">
-        <div class="grid" id="product-grid"></div>
-    </div>
+<div class="grid" id="grid"></div>
 
-    <div id="cart-view" class="view">
-        <h2>Корзина</h2>
-        <div id="cart-items"></div>
-        <div id="cart-total" style="margin-top: 20px; font-weight: bold; text-align: right; color: var(--accent-color); font-size: 18px;"></div>
-        <button class="main-btn" onclick="startCheckout()" id="checkout-btn">Перейти к оформлению</button>
-        <button class="main-btn" style="background: #333; color: white; margin-top: 10px;" onclick="switchTab('catalog-view')">Вернуться в каталог</button>
-    </div>
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-    <div id="profile-view" class="view">
-        <div class="profile-header">
-            <div class="avatar">👤</div>
-            <div>
-                <h3 id="profile-name" style="margin:0">Гость</h3>
-                <span id="profile-city" style="color: var(--accent-color); font-size: 12px;">Москва</span>
-                <span id="dealer-badge" class="role-badge" style="display:none; color: var(--success);">DEALER</span>
-            </div>
-        </div>
-        <div class="card" style="padding: 15px; margin-bottom: 10px;">
-            <p style="margin: 0 0 10px 0; font-size: 12px; color: #777;">Настройки (Тест)</p>
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span>Режим Дилера</span>
-                <input type="checkbox" id="dealer-toggle" onchange="toggleDealerMode()">
-            </div>
-        </div>
-    </div>
+let userProfile = { city: "Москва" };
 
-    <div id="about-view" class="view">
-        <h2>О проекте</h2>
-        <p>Мы — Armotek Films. 20 лет на рынке пленок.</p>
-        <div class="card" style="padding: 15px; margin-top: 10px;">
-            <p><b>Особенности:</b></p>
-            <ul style="padding-left: 20px;">
-                <li>Быстрый заказ</li>
-                <li>История заказов</li>
-                <li>Скрытые цены для партнеров</li>
-            </ul>
-        </div>
-    </div>
+const cities = [
+ "Москва","Санкт-Петербург","Казань","Екатеринбург",
+ "Новосибирск","Краснодар","Ростов-на-Дону"
+];
 
-    <div id="checkout-view" class="view">
-        <button onclick="switchTab('cart-view')" style="background:none; border:none; color:var(--accent-color); margin-bottom:15px; font-size: 14px;">⬅ Назад</button>
-        
-        <div class="stepper">
-            <div class="step active" id="indicator-1">
-                <div class="step-circle">1</div>
-                <div class="step-label">Контакты</div>
-            </div>
-            <div class="step" id="indicator-2">
-                <div class="step-circle">2</div>
-                <div class="step-label">Доставка</div>
-            </div>
-            <div class="step" id="indicator-3">
-                <div class="step-circle">3</div>
-                <div class="step-label">Подтверждение</div>
-            </div>
-        </div>
+const products = [
+ {id:1,name:"NAR PPF H190",price:45000},
+ {id:2,name:"Crystal Matte",price:30000}
+];
 
-        <div id="step-1">
-            <div class="form-group">
-                <label>Имя</label>
-                <input type="text" id="cust-name" placeholder="Иван Иванов">
-            </div>
-            <div class="form-group">
-                <label>Телефон</label>
-                <input type="tel" id="cust-phone" placeholder="+7 (999) 000-00-00" oninput="maskPhone(this)">
-            </div>
-            <div class="form-group">
-                <label>Студия (необязательно)</label>
-                <input type="text" id="cust-studio">
-            </div>
-            <button class="main-btn" onclick="nextStep(2)">Далее</button>
-        </div>
+let cart = [];
 
-        <div id="step-2" style="display:none;">
-            <div class="form-group">
-                <label>Город</label>
-                <select id="addr-city" onchange="updateProfileCity(this.value)">
-                    <option value="Москва">Москва</option>
-                    <option value="Санкт-Петербург">Санкт-Петербург</option>
-                    <option value="Краснодар">Краснодар</option>
-                    <option value="Другой">Другой (СДЭК/ТК)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Улица</label>
-                <input type="text" id="addr-street" placeholder="Улица Ленина">
-            </div>
-            <div class="form-group">
-                <label>Дом / Офис</label>
-                <input type="text" id="addr-house" placeholder="д. 1, оф. 101">
-            </div>
-            <div class="form-group">
-                <label>Дата</label>
-                <select id="del-date"></select> 
-            </div>
-            <div class="form-group">
-                <label>Время</label>
-                <select id="del-time"></select>
-            </div>
-            <div class="form-group">
-                <label>Комментарий</label>
-                <textarea id="del-comment" rows="2"></textarea>
-            </div>
-            <button class="main-btn" onclick="nextStep(3)">Далее</button>
-        </div>
+function openCityModal() {
+ const city = prompt("Выберите город:", userProfile.city);
+ if (city && cities.includes(city)) {
+   userProfile.city = city;
+   document.getElementById("city-selector").innerText = city + " ▼";
+   document.getElementById("delivery-info").innerText =
+     city === "Москва"
+     ? "Доставка по Москве — бесплатно"
+     : "Доставка — по тарифу ТК";
+ }
+}
 
-        <div id="step-3" style="display:none;">
-            <div class="form-group" style="display:flex; align-items:center; gap:10px; background: #333; padding: 10px; border-radius: 8px;">
-                <input type="checkbox" id="is-me-check" onchange="toggleReceiver()" style="width:20px; height: 20px;" checked>
-                <label style="margin:0; font-size: 14px; color: white;">Я получатель</label>
-            </div>
-            <div id="receiver-form" style="display: none;">
-                <div class="form-group">
-                    <label>Имя получателя</label>
-                    <input type="text" id="rec-name">
-                </div>
-                <div class="form-group">
-                    <label>Телефон получателя</label>
-                    <input type="tel" id="rec-phone" oninput="maskPhone(this)">
-                </div>
-            </div>
-            <button class="main-btn" onclick="submitOrder()">✅ Подтвердить заказ</button>
-        </div>
-    </div>
+function render() {
+ const g = document.getElementById("grid");
+ g.innerHTML = "";
+ products.forEach(p=>{
+   const d = document.createElement("div");
+   d.className="card";
+   d.innerHTML = `
+     <b>${p.name}</b><br>
+     ${p.price} ₽<br><br>
+     <button onclick="add(${p.id})">В корзину</button>
+   `;
+   g.appendChild(d);
+ });
+}
 
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('catalog-view', this)">
-            <span class="nav-icon">📂</span> Каталог
-        </div>
-        <div class="nav-item" onclick="switchTab('cart-view', this)">
-            <span class="nav-icon">🛒</span> Корзина
-            <span id="cart-badge" style="display:none; background:red; color:white; border-radius:50%; padding:0 4px; font-size:8px; vertical-align:top;">0</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('profile-view', this)">
-            <span class="nav-icon">👤</span> Профиль
-        </div>
-        <div class="nav-item" onclick="switchTab('about-view', this)">
-            <span class="nav-icon">ℹ️</span> Инфо
-        </div>
-    </div>
+function add(id) {
+ const p = products.find(x=>x.id===id);
+ cart.push({...p, qty:1});
+ alert("Добавлено");
+ sendOrder();
+}
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        // --- DATA ---
-        let isDealer = false;
-        const products = [
-            { id: 101, brand: 'NAR', name: 'NAR PPF H190', unit: 'рул.', retail: 45000, dealer: 38000, desc: 'Топовый полиуретан, 190 мкм' },
-            { id: 102, brand: 'NAR', name: 'NAR PPF H190 (отрез)', unit: 'пог.м.', retail: 3500, dealer: 2900, desc: 'На отрез, ширина 1.52' },
-            { id: 103, brand: 'NAR', name: 'NAR PPF H210', unit: 'рул.', retail: 52000, dealer: 45000, desc: 'Усиленная защита, 210 мкм' },
-            { id: 104, brand: 'NAR', name: 'NAR PPF Matte', unit: 'рул.', retail: 48000, dealer: 41000, desc: 'Матовый сатин' },
-            { id: 105, brand: 'NAR', name: 'NAR PPF Black', unit: 'рул.', retail: 49000, dealer: 42000, desc: 'Черный глянец' },
-            { id: 106, brand: 'NAR', name: 'L190 (Light)', unit: 'рул.', retail: 39000, dealer: 33000, desc: 'Облегченная версия' },
-            { id: 201, brand: 'Crystal', name: 'Crystal Premium 215', unit: 'рул.', retail: 28000, dealer: 22000, desc: 'Корейский гибрид' },
-            { id: 202, brand: 'Crystal', name: 'Crystal Matte', unit: 'рул.', retail: 30000, dealer: 24000, desc: 'Матовый гибрид' },
-            { id: 301, brand: 'Tools', name: 'Ракель выгоночный', unit: 'шт.', retail: 500, dealer: 350, desc: 'Мягкий, 10см' },
-            { id: 302, brand: 'Tools', name: 'Нож Olfa', unit: 'шт.', retail: 1200, dealer: 900, desc: 'Япония, сталь' }
-        ];
-        let cart = [];
-        let userProfile = { city: 'Москва', name: '', phone: '', studio: '' };
+function sendOrder() {
+ const data = {
+   cart: cart,
+   total_price: cart.reduce((a,c)=>a+c.price,0),
+   delivery_price_info:
+     userProfile.city==="Москва"?"free_moscow":"tk_tariff"
+ };
+ tg.sendData(JSON.stringify(data));
+}
 
-        // --- UX HELPERS ---
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `<span>${message}</span>`;
-            
-            container.appendChild(toast);
-            
-            // Animation
-            setTimeout(() => toast.classList.add('show'), 10);
-            
-            // Auto-remove
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function maskPhone(input) {
-            let val = input.value.replace(/\D/g, '');
-            if (val.length > 11) val = val.substring(0, 11);
-            
-            let formatted = '';
-            if (val.length > 0) {
-                if (['7', '8'].includes(val[0])) {
-                    formatted = '+7 ';
-                    if (val.length > 1) formatted += '(' + val.substring(1, 4);
-                    if (val.length >= 5) formatted += ') ' + val.substring(4, 7);
-                    if (val.length >= 8) formatted += '-' + val.substring(7, 9);
-                    if (val.length >= 10) formatted += '-' + val.substring(9, 11);
-                } else {
-                    formatted = '+' + val;
-                }
-            }
-            input.value = formatted;
-        }
-
-        function validatePhone(phone) {
-            // Regex: +7 (XXX) XXX-XX-XX or similar formats
-            const re = /^[\d\+\-\(\) ]{10,}$/;
-            return re.test(phone) && phone.replace(/\D/g, '').length >= 10;
-        }
-
-        // --- INIT ---
-        function init() {
-            const saved = localStorage.getItem('armotek_profile');
-            if (saved) {
-                userProfile = JSON.parse(saved);
-                document.getElementById('profile-name').innerText = userProfile.name || tg.initDataUnsafe?.user?.first_name || 'Гость';
-                document.getElementById('profile-city').innerText = userProfile.city;
-                document.getElementById('addr-city').value = userProfile.city || 'Москва';
-                document.getElementById('cust-name').value = userProfile.name || '';
-                document.getElementById('cust-phone').value = userProfile.phone || '';
-                document.getElementById('cust-studio').value = userProfile.studio || '';
-                
-                if (userProfile.isDealer) {
-                    isDealer = true;
-                    document.getElementById('dealer-toggle').checked = true;
-                    toggleDealerMode(false);
-                }
-            } else if (tg.initDataUnsafe?.user) {
-                document.getElementById('profile-name').innerText = tg.initDataUnsafe.user.first_name;
-            }
-            document.getElementById('city-selector').innerText = userProfile.city + ' ▼';
-            renderCatalog('all');
-            updateCartBadge();
-        }
-
-        // --- CATALOG ---
-        function filterBrand(brand) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            renderCatalog(brand);
-        }
-
-        function renderCatalog(filter) {
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = '';
-            products.forEach(p => {
-                if (filter !== 'all' && p.brand !== filter) return;
-                
-                let priceHtml = isDealer 
-                    ? `<div class="price-container"><div style="font-size:10px; color:#555;">Опт:</div><span class="dealer-price" ontouchstart="this.classList.add('revealed')" ontouchend="this.classList.remove('revealed')" onmousedown="this.classList.add('revealed')" onmouseup="this.classList.remove('revealed')">${formatPrice(p.dealer)}</span></div>`
-                    : `<span class="card-price">${formatPrice(p.retail)}</span>`;
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="card-img">${p.brand}</div>
-                    <div class="card-body">
-                        <div>
-                            <h4 class="card-title">${p.name}</h4>
-                            <div style="font-size: 11px; color: #777; margin-bottom: 5px;">${p.desc}</div>
-                            ${priceHtml}
-                        </div>
-                        <button class="add-btn" onclick="addToCart(${p.id})">В корзину</button>
-                    </div>`;
-                grid.appendChild(card);
-            });
-        }
-        function formatPrice(num) { return num.toLocaleString('ru-RU') + ' ₽'; }
-
-        function toggleDealerMode(save = true) {
-            isDealer = document.getElementById('dealer-toggle').checked;
-            document.getElementById('dealer-badge').style.display = isDealer ? 'inline-block' : 'none';
-            if (save) {
-                userProfile.isDealer = isDealer;
-                saveProfile();
-                renderCatalog('all');
-                showToast(isDealer ? 'Режим дилера включен' : 'Режим розницы');
-            }
-        }
-
-        // --- CART ---
-        function addToCart(id) {
-            const prod = products.find(p => p.id === id);
-            const existing = cart.find(i => i.id === id);
-            const price = isDealer ? prod.dealer : prod.retail;
-
-            if (existing) { existing.qty++; } 
-            else { cart.push({ ...prod, qty: 1, price: price }); }
-            
-            tg.HapticFeedback.impactOccurred('light');
-            updateCartBadge();
-            showToast('Добавлено в корзину');
-        }
-
-        function renderCart() {
-            const container = document.getElementById('cart-items');
-            container.innerHTML = '';
-            let total = 0;
-            if (cart.length === 0) {
-                container.innerHTML = '<div class="empty-cart"><h3>Корзина пуста 🛒</h3><p>Добавьте товары</p></div>';
-                document.getElementById('checkout-btn').style.display = 'none';
-                document.getElementById('cart-total').innerText = '';
-                return;
-            }
-            document.getElementById('checkout-btn').style.display = 'block';
-            cart.forEach((item, idx) => {
-                total += item.price * item.qty;
-                const el = document.createElement('div');
-                el.className = 'cart-item';
-                el.innerHTML = `
-                    <div style="flex:1"><b>${item.name}</b><br><small style="color:#777">${formatPrice(item.price)}</small></div>
-                    <div class="qty-control">
-                        <button class="qty-btn" onclick="updateQty(${idx}, -1)">-</button>
-                        <span style="min-width: 40px; text-align:center;">${item.qty}</span>
-                        <button class="qty-btn" onclick="updateQty(${idx}, 1)">+</button>
-                    </div>`;
-                container.appendChild(el);
-            });
-            document.getElementById('cart-total').innerText = `Итого: ${formatPrice(total)}`;
-        }
-
-        function updateQty(idx, change) {
-            cart[idx].qty += change;
-            if (cart[idx].qty <= 0) cart.splice(idx, 1);
-            renderCart();
-            updateCartBadge();
-        }
-
-        function updateCartBadge() {
-            const badge = document.getElementById('cart-badge');
-            const count = cart.reduce((acc, item) => acc + item.qty, 0);
-            if (count > 0) {
-                badge.style.display = 'inline-block';
-                badge.innerText = count;
-                badge.classList.remove('badge-anim');
-                void badge.offsetWidth; // trigger reflow
-                badge.classList.add('badge-anim');
-            } else { badge.style.display = 'none'; }
-        }
-
-        // --- CHECKOUT ---
-        function startCheckout() {
-            if (cart.length === 0) return showToast('Корзина пуста!', 'error');
-            switchTab('checkout-view');
-            populateDates();
-            updateStepper(1);
-        }
-
-        function updateStepper(step) {
-            for(let i=1; i<=3; i++) {
-                const el = document.getElementById('indicator-'+i);
-                el.classList.remove('active', 'completed');
-                if(i < step) el.classList.add('completed');
-                if(i === step) el.classList.add('active');
-                
-                document.getElementById('step-'+i).style.display = (i === step) ? 'block' : 'none';
-            }
-        }
-
-        function nextStep(step) {
-            if (step === 2) {
-                const name = document.getElementById('cust-name').value.trim();
-                const phone = document.getElementById('cust-phone').value.trim();
-                
-                if (!name) return showToast('Введите имя', 'error');
-                if (!validatePhone(phone)) {
-                    document.getElementById('cust-phone').classList.add('error');
-                    return showToast('Некорректный телефон', 'error');
-                }
-                document.getElementById('cust-phone').classList.remove('error');
-
-                userProfile.name = name; userProfile.phone = phone;
-                userProfile.studio = document.getElementById('cust-studio').value;
-                saveProfile();
-                updateTimeSlots();
-            }
-            if (step === 3) {
-                if (!document.getElementById('addr-street').value.trim()) return showToast('Укажите улицу', 'error');
-            }
-            updateStepper(step);
-        }
-
-        function populateDates() {
-            const select = document.getElementById('del-date');
-            select.innerHTML = '';
-            const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-            let added = 0;
-            for(let i=0; i<14; i++) {
-                const d = new Date(); d.setDate(d.getDate() + i);
-                if (d.getDay() === 0) continue;
-                const opt = document.createElement('option');
-                opt.value = d.toISOString().split('T')[0];
-                opt.text = `${days[d.getDay()]}, ${d.getDate()}.${d.getMonth()+1}`;
-                select.appendChild(opt);
-                if(++added >= 7) break;
-            }
-            select.addEventListener('change', updateTimeSlots);
-        }
-
-        function updateTimeSlots() {
-            const dateStr = document.getElementById('del-date').value;
-            const timeSelect = document.getElementById('del-time');
-            timeSelect.innerHTML = '';
-            const d = new Date(dateStr);
-            if (d.getDay() === 6) {
-                timeSelect.add(new Option('10:00 - 15:00', '10-15'));
-            } else {
-                timeSelect.add(new Option('10:00 - 14:00', '10-14'));
-                timeSelect.add(new Option('14:00 - 18:00', '14-18'));
-                timeSelect.add(new Option('⚡️ СРОЧНО (до 2х часов)', 'urgent'));
-            }
-        }
-
-        function toggleReceiver() {
-            const isMe = document.getElementById('is-me-check').checked;
-            document.getElementById('receiver-form').style.display = isMe ? 'none' : 'block';
-        }
-
-        function submitOrder() {
-            const isMe = document.getElementById('is-me-check').checked;
-            if (!isMe) {
-                if(!document.getElementById('rec-name').value) return showToast('Имя получателя?', 'error');
-                if(!validatePhone(document.getElementById('rec-phone').value)) return showToast('Телефон получателя?', 'error');
-            }
-
-            const orderData = {
-                cart: cart,
-                total_price: cart.reduce((a, c) => a + (c.price * c.qty), 0),
-                is_dealer_order: isDealer,
-                customer: {
-                    name: document.getElementById('cust-name').value,
-                    phone: document.getElementById('cust-phone').value,
-                    studio: document.getElementById('cust-studio').value
-                },
-                address: {
-                    city: document.getElementById('addr-city').value,
-                    street: document.getElementById('addr-street').value,
-                    house: document.getElementById('addr-house').value
-                },
-                delivery: {
-                    date: document.getElementById('del-date').value,
-                    time: document.getElementById('del-time').value,
-                    type: document.getElementById('del-time').value === 'urgent' ? 'urgent' : 'standard'
-                },
-                comment: document.getElementById('del-comment').value,
-                receiver: {
-                    is_me: isMe,
-                    name: isMe ? document.getElementById('cust-name').value : document.getElementById('rec-name').value,
-                    phone: isMe ? document.getElementById('cust-phone').value : document.getElementById('rec-phone').value
-                }
-            };
-            if (tg.initDataUnsafe?.user) {
-                tg.sendData(JSON.stringify(orderData));
-                tg.close();
-            } else {
-                console.log(orderData);
-                showToast('Заказ отправлен (console)', 'success');
-            }
-        }
-
-        function switchTab(viewId, navEl) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            document.getElementById('catalog-filters').style.display = viewId === 'catalog-view' ? 'flex' : 'none';
-            document.getElementById('city-selector').style.display = viewId === 'catalog-view' ? 'block' : 'none';
-            if (navEl) {
-                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                navEl.classList.add('active');
-            }
-            if (viewId === 'cart-view') renderCart();
-            window.scrollTo(0,0);
-        }
-        function updateProfileCity(city) { userProfile.city = city; saveProfile(); document.getElementById('city-selector').innerText = city + ' ▼'; document.getElementById('profile-city').innerText = city; }
-        function saveProfile() { localStorage.setItem('armotek_profile', JSON.stringify(userProfile)); }
-        
-        init();
-    </script>
+render();
+</script>
 </body>
 </html>
-
