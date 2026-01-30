@@ -1,79 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TEST</title>
+</head>
+<body style="background:#000;color:#0f0;font-size:30px;">
+TEST OK
 <script>
-(function () {
-
-    /* ===== TELEGRAM SAFE INIT ===== */
-    var tg = null;
-    if (window.Telegram && window.Telegram.WebApp) {
-        tg = window.Telegram.WebApp;
-        tg.expand();
-    }
-
-    /* ===== DATA ===== */
-    var products = [
-        { id: 1, brand: 'NAR', name: 'Н190', unit: 'рул.' },
-        { id: 2, brand: 'NAR', name: 'Н190 (отрез)', unit: 'м.' },
-        { id: 3, brand: 'Crystal', name: 'Crystal Premium 215', unit: 'рул.' },
-        { id: 4, brand: 'Crystal', name: 'Crystal Matte', unit: 'рул.' }
-    ];
-
-    var cart = [];
-    var userProfile = { city: 'Москва', name: '', phone: '' };
-
-    /* ===== INIT ===== */
-    document.addEventListener('DOMContentLoaded', function () {
-        renderCatalog('all');
-        document.getElementById('city-selector').innerHTML = userProfile.city + ' ▼';
-    });
-
-    /* ===== FILTER ===== */
-    window.filterBrand = function (brand) {
-        var buttons = document.getElementsByClassName('filter-btn');
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].classList.remove('active');
-        }
-
-        if (brand === 'all') buttons[0].classList.add('active');
-        if (brand === 'NAR') buttons[1].classList.add('active');
-        if (brand === 'Crystal') buttons[2].classList.add('active');
-
-        renderCatalog(brand);
-    };
-
-    /* ===== CATALOG ===== */
-    function renderCatalog(filter) {
-        var grid = document.getElementById('product-grid');
-        grid.innerHTML = '';
-
-        for (var i = 0; i < products.length; i++) {
-            var p = products[i];
-            if (filter !== 'all' && p.brand !== filter) continue;
-
-            var card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML =
-                '<div class="card-img"></div>' +
-                '<div class="card-body">' +
-                '<h4 class="card-title">' + p.name + '</h4>' +
-                '<button class="add-btn" onclick="addToCart(' + p.id + ')">В корзину</button>' +
-                '</div>';
-
-            grid.appendChild(card);
-        }
-    }
-
-    /* ===== CART ===== */
-    window.addToCart = function (id) {
-        for (var i = 0; i < products.length; i++) {
-            if (products[i].id === id) {
-                cart.push({ id: id, qty: 1 });
-                break;
-            }
-        }
-        if (tg && tg.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('light');
-        }
-        alert('Добавлено в корзину');
-    };
-
-})();
+alert('JS WORKS');
 </script>
+</body>
+</html>
