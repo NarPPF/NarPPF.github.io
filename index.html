@@ -7,7 +7,6 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- ===== ВНЕШКА БЕЗ ИЗМЕНЕНИЙ ===== -->
     <style>
         :root {
             --bg-color: #121212;
@@ -35,7 +34,12 @@
             font-size: 20px;
             font-weight: bold;
             color: var(--accent-color);
-            margin-bottom: 10px;
+            margin-bottom: 6px;
+        }
+        #city-selector {
+            font-size: 12px;
+            color: var(--secondary-text);
+            margin-bottom: 8px;
         }
         .filters {
             display: flex;
@@ -104,6 +108,27 @@
         }
         .view { display: none; padding: 10px; }
         .view.active { display: block; }
+
+        .delivery-box {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin: 10px;
+        }
+        .delivery-box label {
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+        .delivery-box select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 10px;
+            background: #000;
+            color: #fff;
+            border: 1px solid #333;
+            border-radius: 6px;
+        }
     </style>
 </head>
 
@@ -111,8 +136,8 @@
 
 <div class="header">
     <div class="logo">ARMOTEK FILMS</div>
-    <div id="city-selector" style="font-size:12px;color:var(--secondary-text)">Москва ▼</div>
-    <div class="filters" id="catalog-filters">
+    <div id="city-selector">Москва ▼</div>
+    <div class="filters">
         <button class="filter-btn active" onclick="filterBrand('all', this)">Все</button>
         <button class="filter-btn" onclick="filterBrand('NAR', this)">NAR PPF</button>
         <button class="filter-btn" onclick="filterBrand('Crystal', this)">Crystal</button>
@@ -126,6 +151,29 @@
 <div id="cart-view" class="view">
     <h2>Корзина</h2>
     <div id="cart-items"></div>
+
+    <!-- ДОСТАВКА -->
+    <div class="delivery-box">
+        <label>Город</label>
+        <select id="city" onchange="updateDelivery()">
+            <option value="Москва">Москва</option>
+            <option value="СПб">Санкт-Петербург</option>
+            <option value="Регионы">Регионы</option>
+        </select>
+
+        <label>Тип доставки</label>
+        <select id="deliveryType" onchange="updateDelivery()">
+            <option value="courier">Курьер</option>
+            <option value="cdek">СДЭК</option>
+            <option value="pickup">Самовывоз</option>
+        </select>
+
+        <label>Дата</label>
+        <select id="deliveryDate" onchange="updateDelivery()"></select>
+
+        <label>Время</label>
+        <select id="deliveryTime"></select>
+    </div>
 </div>
 
 <div class="bottom-nav">
@@ -133,7 +181,6 @@
     <div class="nav-item" onclick="switchTab('cart-view', this)">🛒<br>Корзина</div>
 </div>
 
-<!-- ===== ИСПРАВЛЕННЫЙ JS ===== -->
 <script>
 (function () {
 
@@ -141,10 +188,10 @@
     if (tg) tg.expand();
 
     var products = [
-        { id: 1, brand: 'NAR', name: 'Н190' },
-        { id: 2, brand: 'NAR', name: 'Н190 (отрез)' },
-        { id: 3, brand: 'Crystal', name: 'Crystal Premium 215' },
-        { id: 4, brand: 'Crystal', name: 'Crystal Matte' }
+        { id: 1, brand: 'NAR', name: 'Н190', size: 1 },
+        { id: 2, brand: 'NAR', name: 'Н190 (отрез)', size: 1 },
+        { id: 3, brand: 'Crystal', name: 'Crystal Premium 215', size: 2 },
+        { id: 4, brand: 'Crystal', name: 'Crystal Matte', size: 2 }
     ];
 
     var cart = [];
@@ -178,9 +225,57 @@
     }
 
     window.addToCart = function (id) {
-        cart.push(id);
+        for (var i = 0; i < products.length; i++) {
+            if (products[i].id === id) {
+                cart.push(products[i]);
+                break;
+            }
+        }
+        updateDelivery();
         if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        alert('Добавлено в корзину');
+    };
+
+    function isBigOrder() {
+        var total = 0;
+        for (var i = 0; i < cart.length; i++) total += cart[i].size;
+        return total >= 3;
+    }
+
+    window.updateDelivery = function () {
+        var city = document.getElementById('city').value;
+        var type = document.getElementById('deliveryType').value;
+        var dateSel = document.getElementById('deliveryDate');
+        var timeSel = document.getElementById('deliveryTime');
+
+        dateSel.innerHTML = '';
+        timeSel.innerHTML = '';
+
+        var today = new Date();
+        for (var i = 0; i < 5; i++) {
+            var d = new Date();
+            d.setDate(today.getDate() + i);
+            var opt = document.createElement('option');
+            opt.value = d.toISOString().split('T')[0];
+            opt.text = d.toLocaleDateString('ru-RU');
+            dateSel.appendChild(opt);
+        }
+
+        if (type === 'pickup') {
+            timeSel.add(new Option('10:00 – 18:00', 'all'));
+            return;
+        }
+
+        if (type === 'cdek') {
+            timeSel.add(new Option('Передача в ТК (в течение дня)', 'cdek'));
+            return;
+        }
+
+        timeSel.add(new Option('10:00 – 14:00', '10-14'));
+
+        if (!isBigOrder()) {
+            timeSel.add(new Option('14:00 – 18:00', '14-18'));
+            timeSel.add(new Option('⚡ Срочно (сегодня)', 'urgent'));
+        }
     };
 
     window.switchTab = function (viewId, el) {
@@ -194,6 +289,7 @@
     };
 
     renderCatalog('all');
+    updateDelivery();
 
 })();
 </script>
