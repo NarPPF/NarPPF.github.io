@@ -2,9 +2,126 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>TEST OK</title>
+    <title>NarPPF</title>
+
+    <!-- Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f6f6;
+        }
+        header {
+            padding: 16px;
+            background: #111;
+            color: #fff;
+            text-align: center;
+            font-size: 20px;
+        }
+        .filters {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: #fff;
+        }
+        .filter-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background: #111;
+            color: #fff;
+        }
+        #product-grid {
+            padding: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .card {
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .add-btn {
+            margin-top: 8px;
+            width: 100%;
+            padding: 8px;
+        }
+    </style>
 </head>
-<body style="background:red;color:white;font-size:40px;">
-    ЕСЛИ ТЫ ЭТО ВИДИШЬ — GITHUB PAGES РАБОТАЕТ
+
+<body>
+
+<header>NarPPF Catalog</header>
+
+<div class="filters">
+    <button class="filter-btn active" onclick="filterBrand('all')">Все</button>
+    <button class="filter-btn" onclick="filterBrand('NAR')">NAR</button>
+    <button class="filter-btn" onclick="filterBrand('Crystal')">Crystal</button>
+</div>
+
+<div id="product-grid"></div>
+
+<script>
+(function () {
+
+    /* ===== TELEGRAM INIT ===== */
+    if (window.Telegram && window.Telegram.WebApp) {
+        Telegram.WebApp.expand();
+    }
+
+    /* ===== DATA ===== */
+    var products = [
+        { id: 1, brand: 'NAR', name: 'NAR PPF 190' },
+        { id: 2, brand: 'NAR', name: 'NAR PPF 215' },
+        { id: 3, brand: 'Crystal', name: 'Crystal Premium' },
+        { id: 4, brand: 'Crystal', name: 'Crystal Matte' }
+    ];
+
+    /* ===== FILTER ===== */
+    window.filterBrand = function (brand) {
+        var btns = document.getElementsByClassName('filter-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.remove('active');
+        }
+
+        if (brand === 'all') btns[0].classList.add('active');
+        if (brand === 'NAR') btns[1].classList.add('active');
+        if (brand === 'Crystal') btns[2].classList.add('active');
+
+        renderCatalog(brand);
+    };
+
+    /* ===== RENDER ===== */
+    function renderCatalog(filter) {
+        var grid = document.getElementById('product-grid');
+        grid.innerHTML = '';
+
+        for (var i = 0; i < products.length; i++) {
+            var p = products[i];
+            if (filter !== 'all' && p.brand !== filter) continue;
+
+            var card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML =
+                '<b>' + p.name + '</b><br>' +
+                '<small>' + p.brand + '</small><br>' +
+                '<button class="add-btn">В корзину</button>';
+
+            grid.appendChild(card);
+        }
+    }
+
+    renderCatalog('all');
+
+})();
+</script>
+
 </body>
 </html>
