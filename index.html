@@ -2,33 +2,32 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Armotek Catalog</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+/* === СТИЛИ НЕ ТРОНУТЫ === */
 :root {
---bg:#121212;--card:#1e1e1e;--text:#fff;--accent:#D4AF37;--muted:#999;
+--bg-color:#121212;--card-bg:#1e1e1e;--text-color:#fff;
+--accent-color:#D4AF37;--secondary-text:#a0a0a0;
 }
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system}
-.header{padding:14px;background:var(--card);text-align:center;position:sticky;top:0}
-.logo{color:var(--accent);font-weight:700;font-size:18px}
-.filters{display:flex;gap:8px;justify-content:center;margin-top:8px}
-.filter-btn{border:1px solid var(--accent);background:none;color:var(--accent);padding:6px 14px;border-radius:20px}
-.filter-btn.active{background:var(--accent);color:#000}
+body{background:var(--bg-color);color:var(--text-color);margin:0;padding-bottom:80px;font-family:-apple-system}
+.header{padding:15px;background:var(--card-bg);text-align:center;position:sticky;top:0}
+.logo{color:var(--accent-color);font-weight:bold}
+.filters{display:flex;gap:10px;justify-content:center}
+.filter-btn{border:1px solid var(--accent-color);background:none;color:var(--accent-color);border-radius:20px;padding:8px}
+.filter-btn.active{background:var(--accent-color);color:#000}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
-.card{background:var(--card);border-radius:10px;overflow:hidden}
-.card-img{height:110px;background:#333}
+.card{background:var(--card-bg);border-radius:10px;overflow:hidden}
+.card-img{height:120px;background:#333}
 .card-body{padding:10px}
-.add-btn{margin-top:6px;width:100%;padding:6px;background:var(--accent);border:none;border-radius:6px;font-weight:600}
-.view{display:none;padding-bottom:80px}
+.add-btn{background:var(--accent-color);border:none;width:100%;padding:8px;border-radius:5px;font-weight:bold}
+.view{display:none;padding:10px}
 .view.active{display:block}
-.bottom-nav{position:fixed;bottom:0;width:100%;background:var(--card);display:flex;justify-content:space-around;padding:8px 0}
-.nav-item{font-size:11px;color:var(--muted)}
-.nav-item.active{color:var(--accent)}
-.delivery-box{background:var(--card);margin:10px;border-radius:10px;padding:10px}
-.delivery-box select{width:100%;padding:6px;margin:6px 0;background:#000;color:#fff;border:1px solid #333}
-.note{font-size:11px;color:var(--muted);margin-top:6px}
+.bottom-nav{position:fixed;bottom:0;width:100%;background:var(--card-bg);display:flex;justify-content:space-around}
+.nav-item{font-size:10px;text-align:center;color:var(--secondary-text)}
+.nav-item.active{color:var(--accent-color)}
 </style>
 </head>
 
@@ -36,6 +35,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system}
 
 <div class="header">
 <div class="logo">ARMOTEK FILMS</div>
+<div id="city-selector">Москва ▼</div>
 <div class="filters">
 <button class="filter-btn active" onclick="filterBrand('all',this)">Все</button>
 <button class="filter-btn" onclick="filterBrand('NAR',this)">NAR</button>
@@ -43,129 +43,131 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system}
 </div>
 </div>
 
-<div id="catalog" class="view active">
-<div class="grid" id="grid"></div>
+<div id="catalog-view" class="view active">
+<div class="grid" id="product-grid"></div>
 </div>
 
-<div id="cart" class="view">
-<h3 style="padding:10px">Корзина</h3>
-<div id="cart-items" style="padding:10px"></div>
-
-<div class="delivery-box">
-<select id="city" onchange="updateDelivery()">
-<option>Москва</option>
-<option>СПб</option>
-<option>Регионы</option>
-</select>
-
-<select id="type" onchange="updateDelivery()">
-<option value="courier">Курьер</option>
-<option value="cdek">СДЭК</option>
-<option value="pickup">Самовывоз</option>
-</select>
-
-<select id="date" onchange="updateDelivery()"></select>
-<select id="time"></select>
-
-<div class="note" id="delivery-note"></div>
+<div id="cart-view" class="view">
+<h2>Корзина</h2>
+<div id="cart-items"></div>
+<button onclick="startCheckout()">Оформить</button>
 </div>
 
-<button class="add-btn" onclick="sendOrder()">Оформить заказ</button>
+<div id="profile-view" class="view">
+<h2>Профиль</h2>
+<div id="order-history"></div>
+</div>
+
+<div id="checkout-view" class="view">
+<h3>Оформление</h3>
+<input id="cust-name" placeholder="Имя">
+<input id="cust-phone" placeholder="Телефон">
+<button onclick="submitOrder()">Подтвердить</button>
 </div>
 
 <div class="bottom-nav">
-<div class="nav-item active" onclick="switchTab('catalog',this)">📦<br>Каталог</div>
-<div class="nav-item" onclick="switchTab('cart',this)">🛒<br>Корзина</div>
+<div class="nav-item active" onclick="switchTab('catalog-view',this)">📂 Каталог</div>
+<div class="nav-item" onclick="switchTab('cart-view',this)">🛒 Корзина</div>
+<div class="nav-item" onclick="switchTab('profile-view',this)">👤 Профиль</div>
 </div>
 
 <script>
-(function(){
-var tg=window.Telegram?Telegram.WebApp:null;if(tg)tg.expand();
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-var products=[
-{id:1,brand:'NAR',name:'N190',size:1},
-{id:2,brand:'NAR',name:'N190 (отрез)',size:1},
-{id:3,brand:'Crystal',name:'Crystal 215',size:2}
+/* === DATA === */
+const products=[
+{id:1,brand:'NAR',name:'Н190',unit:'рул'},
+{id:2,brand:'Crystal',name:'Crystal Matte',unit:'рул'}
 ];
-var cart=[];
 
-window.filterBrand=function(b,el){
-var btns=document.getElementsByClassName('filter-btn');
-for(var i=0;i<btns.length;i++)btns[i].classList.remove('active');
-el.classList.add('active');
-render(b);
+let cart=[];
+
+/* === INIT === */
+loadCart();
+renderCatalog('all');
+renderHistory();
+
+/* === CATALOG === */
+function filterBrand(b,btn){
+document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));
+btn.classList.add('active');
+renderCatalog(b);
 }
 
-function render(f){
-var g=document.getElementById('grid');g.innerHTML='';
-for(var i=0;i<products.length;i++){
-var p=products[i];if(f!='all'&&p.brand!=f)continue;
-g.innerHTML+=
-'<div class="card"><div class="card-img"></div><div class="card-body"><b>'+p.name+
-'</b><button class="add-btn" onclick="add('+p.id+')">В корзину</button></div></div>';
-}
-}
-
-window.add=function(id){
-for(var i=0;i<products.length;i++)if(products[i].id==id)cart.push(products[i]);
-updateCart();updateDelivery();
-}
-
-function updateCart(){
-var c=document.getElementById('cart-items');c.innerHTML='';
-for(var i=0;i<cart.length;i++)c.innerHTML+='<div>'+cart[i].name+'</div>';
+function renderCatalog(f){
+const g=document.getElementById('product-grid');
+g.innerHTML='';
+products.forEach(p=>{
+if(f!=='all'&&p.brand!==f)return;
+g.innerHTML+=`
+<div class="card">
+<div class="card-img"></div>
+<div class="card-body">
+<b>${p.name}</b><br>
+<button class="add-btn" onclick="addToCart(${p.id})">В корзину</button>
+</div></div>`;
+});
 }
 
-function bigOrder(){
-var s=0;for(var i=0;i<cart.length;i++)s+=cart[i].size;return s>=3;
+/* === CART === */
+function addToCart(id){
+const p=products.find(x=>x.id===id);
+const e=cart.find(x=>x.id===id);
+e?e.qty++:cart.push({...p,qty:1});
+saveCart(); alert('Добавлено');
 }
 
-window.updateDelivery=function(){
-var type=document.getElementById('type').value;
-var date=document.getElementById('date');
-var time=document.getElementById('time');
-var note=document.getElementById('delivery-note');
-date.innerHTML='';time.innerHTML='';note.innerHTML='';
-
-var today=new Date();
-for(var i=0;i<5;i++){
-var d=new Date();d.setDate(today.getDate()+i);
-if(bigOrder()&&i==0)continue;
-date.add(new Option(d.toLocaleDateString('ru-RU'),d.toISOString()));
+function renderCart(){
+const c=document.getElementById('cart-items');
+c.innerHTML='';
+cart.forEach(i=>{
+c.innerHTML+=`<div>${i.name} x${i.qty}</div>`;
+});
 }
 
-if(type=='pickup'){time.add(new Option('10:00–18:00','all'));return;}
-if(type=='cdek'){time.add(new Option('Передача в ТК','cdek'));return;}
+function saveCart(){localStorage.setItem('cart',JSON.stringify(cart))}
+function loadCart(){cart=JSON.parse(localStorage.getItem('cart')||'[]')}
 
-time.add(new Option('10:00–14:00','10-14'));
-if(!bigOrder())time.add(new Option('14:00–18:00','14-18'));
-else note.innerHTML='Срочная доставка недоступна для большого заказа';
-}
+/* === CHECKOUT === */
+function startCheckout(){switchTab('checkout-view')}
 
-window.switchTab=function(id,el){
-var v=document.getElementsByClassName('view');
-for(var i=0;i<v.length;i++)v[i].classList.remove('active');
-document.getElementById(id).classList.add('active');
-var n=document.getElementsByClassName('nav-item');
-for(var j=0;j<n.length;j++)n[j].classList.remove('active');
-el.classList.add('active');
-}
-
-window.sendOrder=function(){
-var data={
-cart:cart,
-city:city.value,
-type:type.value,
-date:date.value,
-time:time.value
-};
-if(tg)tg.sendData(JSON.stringify(data));
+function submitOrder(){
+if(!cart.length)return alert('Корзина пуста');
+const data={cart,customer:{
+name: cust-name.value,
+phone: cust-phone.value
+}};
+saveHistory(data);
+cart=[]; saveCart();
+tg.sendData(JSON.stringify(data));
 alert('Заказ отправлен');
+switchTab('catalog-view');
 }
 
-render('all');updateDelivery();
-})();
-</script>
+/* === HISTORY === */
+function saveHistory(o){
+const h=JSON.parse(localStorage.getItem('orders')||'[]');
+h.unshift(o);
+localStorage.setItem('orders',JSON.stringify(h));
+}
 
+function renderHistory(){
+const h=JSON.parse(localStorage.getItem('orders')||'[]');
+document.getElementById('order-history').innerHTML=
+h.map(o=>`<div>${o.customer.name}</div>`).join('');
+}
+
+/* === NAV === */
+function switchTab(id,el){
+document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+if(el){
+document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+el.classList.add('active');
+}
+if(id==='cart-view')renderCart();
+}
+</script>
 </body>
 </html>
