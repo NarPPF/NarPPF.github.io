@@ -1,122 +1,183 @@
-<!-- === ARMOTEK FINAL MINI APP === -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Armotek Catalog</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta charset="UTF-8">
+  <title>Каталог</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ⚠️ ТВОИ СТИЛИ — БЕЗ ИЗМЕНЕНИЙ -->
-<!-- Я НЕ УБИРАЛ НИ ОДНОГО CSS-БЛОКА -->
-<!-- (опущены здесь ради читаемости, но в реальном проекте оставляешь ВСЁ) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+  <style>
+    :root {
+      --accent: #0088cc;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 10px;
+    }
+    h1 {
+      text-align: center;
+      color: var(--accent);
+    }
+    .product {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+    .product b {
+      font-size: 18px;
+    }
+    .qty {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button.secondary {
+      background: #ccc;
+      color: #000;
+    }
+    #cart {
+      margin-top: 20px;
+    }
+    .cart-item {
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+  </style>
 </head>
 <body>
 
-<!-- ===== HTML СТРУКТУРА — БЕЗ ИЗМЕНЕНИЙ ===== -->
-<!-- ТВОЙ HEADER / VIEW / CART / CHECKOUT / PROFILE -->
-<!-- Я НЕ УДАЛИЛ НИ ОДНОГО DIV -->
+<h1 id="title">Каталог</h1>
+
+<div id="products"></div>
+
+<div id="cart">
+  <h2>Корзина</h2>
+  <div id="cartItems"></div>
+  <p><b>Итого:</b> <span id="total">0</span> ₽</p>
+  <button onclick="sendOrder()">Оформить заказ</button>
+</div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-/* ===== ТВОЯ БАЗА ТОВАРОВ + ЦЕНЫ ===== */
-const products = [
- {id:1,brand:'NAR',name:'Н190',unit:'рул.',price:45000},
- {id:2,brand:'NAR',name:'Н190 (отрез)',unit:'м.',price:2500},
- {id:3,brand:'Crystal',name:'Crystal Premium 215',unit:'рул.',price:52000},
- {id:4,brand:'Crystal',name:'Crystal Matte',unit:'рул.',price:50000},
- {id:5,brand:'NAR',name:'Лобаш',unit:'рул.',price:48000},
- {id:6,brand:'NAR',name:'Цветная пленка',unit:'рул.',price:47000}
-];
+const params = new URLSearchParams(window.location.search);
+const BRAND = params.get("brand") || "armotek";
 
-let cart = JSON.parse(localStorage.getItem('armotek_cart') || '[]');
-let userProfile = JSON.parse(localStorage.getItem('armotek_profile') || '{"city":"Москва"}');
+const API_URL = "https://YOUR_DOMAIN:8080";
+const API_KEY = "CHANGE_ME";
 
-/* ===== СОХРАНЕНИЕ ===== */
-function saveCart(){localStorage.setItem('armotek_cart',JSON.stringify(cart));}
-function saveProfile(){localStorage.setItem('armotek_profile',JSON.stringify(userProfile));}
+const uid = tg.initDataUnsafe.user.id;
 
-/* ===== ИСПРАВЛЕННЫЙ ФИЛЬТР ===== */
-function filterBrand(brand,btn){
- document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
- btn.classList.add('active');
- renderCatalog(brand);
+let PRODUCTS = [];
+let CART = [];
+
+async function loadProducts() {
+  const res = await fetch(
+    `${API_URL}/products?brand=${BRAND}&uid=${uid}`,
+    { headers: { "X-API-Key": API_KEY } }
+  );
+  PRODUCTS = await res.json();
+  renderProducts();
 }
 
-/* ===== КАТАЛОГ ===== */
-function renderCatalog(filter){
- const grid=document.getElementById('product-grid');
- grid.innerHTML='';
- products.forEach(p=>{
-  if(filter!=='all'&&p.brand!==filter)return;
-  grid.innerHTML+=`
-  <div class="card">
-   <div class="card-body">
-    <h4>${p.name}</h4>
-    <small>${p.brand}</small>
-    <b>${p.price.toLocaleString()} ₽</b>
-    <button class="add-btn" onclick="addToCart(${p.id})">В корзину</button>
-   </div>
-  </div>`;
- });
+function renderProducts() {
+  const el = document.getElementById("products");
+  el.innerHTML = "";
+  PRODUCTS.forEach(p => {
+    const d = document.createElement("div");
+    d.className = "product";
+    d.innerHTML = `
+      <b>${p.name}</b><br>
+      Цена: ${p.price} ₽<br>
+      В наличии: ${p.qty}
+      <div class="qty">
+        <input type="number" min="1" value="1" id="q_${p.name}">
+        <button onclick="addToCart('${p.name}')">Добавить</button>
+      </div>
+    `;
+    el.appendChild(d);
+  });
 }
 
-/* ===== КОРЗИНА ===== */
-function addToCart(id){
- const p=products.find(x=>x.id===id);
- const e=cart.find(x=>x.id===id);
- e?e.qty++:cart.push({...p,qty:1});
- saveCart();
- tg.HapticFeedback.impactOccurred('light');
+function addToCart(name) {
+  const q = parseInt(document.getElementById("q_"+name).value);
+  const p = PRODUCTS.find(x => x.name === name);
+  if (!p || q < 1) return;
+
+  CART.push({ name: name, qty: q, price: p.price });
+  renderCart();
 }
 
-function renderCart(){
- const c=document.getElementById('cart-items');
- c.innerHTML='';
- let total=0;
- cart.forEach((i,n)=>{
-  total+=i.price*i.qty;
-  c.innerHTML+=`${i.name} x${i.qty}<br>`;
- });
- document.getElementById('cart-total').innerText=
-  "Итого: "+total.toLocaleString()+" ₽";
+function renderCart() {
+  const el = document.getElementById("cartItems");
+  el.innerHTML = "";
+  let total = 0;
+  CART.forEach((c,i) => {
+    total += c.price * c.qty;
+    const d = document.createElement("div");
+    d.className = "cart-item";
+    d.innerHTML = `
+      ${c.name} — ${c.qty} × ${c.price} ₽
+      <button class="secondary" onclick="removeItem(${i})">✕</button>
+    `;
+    el.appendChild(d);
+  });
+  document.getElementById("total").innerText = total;
 }
 
-/* ===== ОТПРАВКА ===== */
-function submitOrder(){
- if(!cart.length){alert("Корзина пуста");return;}
- const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
-
- const data={
-  cart:cart,
-  total:total,
-  customer:{
-   name:document.getElementById('cust-name').value,
-   phone:document.getElementById('cust-phone').value,
-   studio:document.getElementById('cust-studio').value
-  },
-  address:{
-   city:document.getElementById('addr-city').value,
-   street:document.getElementById('addr-street').value,
-   house:document.getElementById('addr-house').value
-  },
-  delivery:{
-   date:document.getElementById('del-date').value,
-   time:document.getElementById('del-time').value,
-   type:document.getElementById('del-time').value==='urgent'?'urgent':'standard'
-  },
-  comment:document.getElementById('del-comment').value,
-  receiver:{is_me:true}
- };
-
- tg.sendData(JSON.stringify(data));
- localStorage.removeItem('armotek_cart');
+function removeItem(i) {
+  CART.splice(i,1);
+  renderCart();
 }
 
-renderCatalog('all');
+async function sendOrder() {
+  if (CART.length === 0) {
+    alert("Корзина пуста");
+    return;
+  }
+
+  const res = await fetch(`${API_URL}/order`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": API_KEY
+    },
+    body: JSON.stringify({
+      brand: BRAND,
+      uid: uid,
+      cart: CART
+    })
+  });
+
+  const data = await res.json();
+  if (data.status === "ok") {
+    tg.showAlert("✅ Заказ отправлен");
+    CART = [];
+    renderCart();
+  } else {
+    tg.showAlert("❌ Ошибка оформления");
+  }
+}
+
+loadProducts();
 </script>
+
 </body>
 </html>
