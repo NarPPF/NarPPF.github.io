@@ -1,595 +1,117 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Armotek Catalog</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #ffffff;
-            --accent-color: #D4AF37; /* Золотой/Премиум */
-            --secondary-text: #a0a0a0;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Armotek Films</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            padding-bottom: 80px; /* Место под нижнее меню */
-        }
-
-        /* HEADER */
-        .header {
-            padding: 15px;
-            background: var(--card-bg);
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-        .logo {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--accent-color);
-            margin-bottom: 10px;
-        }
-        .filters {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        .filter-btn {
-            background: transparent;
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .filter-btn.active {
-            background: var(--accent-color);
-            color: #000;
-        }
-
-        /* GRID */
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            padding: 10px;
-        }
-        .card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        .card-img {
-            width: 100%;
-            height: 120px;
-            background-color: #333;
-            object-fit: cover;
-        }
-        .card-body {
-            padding: 10px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .card-title {
-            font-size: 14px;
-            margin: 0 0 5px 0;
-        }
-        .card-price {
-            font-size: 12px;
-            color: var(--secondary-text);
-        }
-        .add-btn {
-            background: var(--accent-color);
-            border: none;
-            width: 100%;
-            padding: 8px;
-            border-radius: 5px;
-            margin-top: 10px;
-            color: #000;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* BOTTOM NAV */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: var(--card-bg);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            border-top: 1px solid #333;
-            z-index: 1000;
-        }
-        .nav-item {
-            text-align: center;
-            color: var(--secondary-text);
-            font-size: 10px;
-            cursor: pointer;
-        }
-        .nav-item.active {
-            color: var(--accent-color);
-        }
-        .nav-icon {
-            font-size: 20px;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        /* VIEWS */
-        .view { display: none; padding: 10px; }
-        .view.active { display: block; }
-
-        /* CART */
-        .cart-item {
-            background: var(--card-bg);
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .qty-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .qty-btn {
-            background: #333;
-            color: white;
-            border: none;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-        }
-
-        /* FORM */
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--secondary-text);
-            font-size: 12px;
-        }
-        input, select, textarea {
-            width: 100%;
-            background: #333;
-            border: 1px solid #444;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        .main-btn {
-            background: var(--accent-color);
-            color: #000;
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-        
-        .empty-cart { text-align: center; margin-top: 50px; color: var(--secondary-text); }
-        .profile-header { display: flex; align-items: center; margin-bottom: 20px; }
-        .avatar { width: 60px; height: 60px; background: #333; border-radius: 50%; margin-right: 15px; }
-
-        /* CHECKOUT MODAL */
-        #checkout-view { padding-bottom: 100px; }
-    </style>
+<style>
+body{margin:0;font-family:Arial;background:#121212;color:#fff}
+.header{padding:15px;text-align:center;background:#1e1e1e}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
+.card{background:#1e1e1e;border-radius:8px;padding:10px}
+.btn{background:#D4AF37;border:none;padding:10px;width:100%;margin-top:5px;font-weight:bold}
+.view{display:none;padding-bottom:80px}
+.view.active{display:block}
+.bottom{position:fixed;bottom:0;width:100%;display:flex;background:#1e1e1e}
+.bottom div{flex:1;text-align:center;padding:10px;cursor:pointer}
+input,select{width:100%;padding:10px;margin-top:5px}
+</style>
 </head>
+
 <body>
+<div class="header"><b>ARMOTEK FILMS</b></div>
 
-    <div class="header">
-        <div class="logo">ARMOTEK FILMS</div>
-        <div id="city-selector" style="font-size: 12px; color: var(--secondary-text); margin-bottom: 10px;">
-            Москва ▼
-        </div>
-        <div class="filters" id="catalog-filters">
-            <button class="filter-btn active" onclick="filterBrand('all')">Все</button>
-            <button class="filter-btn" onclick="filterBrand('NAR')">NAR PPF</button>
-            <button class="filter-btn" onclick="filterBrand('Crystal')">Crystal</button>
-        </div>
-    </div>
+<div id="catalog" class="view active">
+ <div class="grid" id="grid"></div>
+</div>
 
-    <div id="catalog-view" class="view active">
-        <div class="grid" id="product-grid">
-            </div>
-    </div>
+<div id="cart" class="view">
+ <div id="cartItems"></div>
+ <b id="total"></b>
+ <button class="btn" onclick="checkout()">Оформить</button>
+</div>
 
-    <div id="cart-view" class="view">
-        <h2>Корзина</h2>
-        <div id="cart-items"></div>
-        <div id="cart-total" style="margin-top: 20px; font-weight: bold; text-align: right;"></div>
-        <button class="main-btn" onclick="startCheckout()" id="checkout-btn">Перейти к оформлению</button>
-        <button class="main-btn" style="background: #333; color: white; margin-top: 10px;" onclick="switchTab('catalog-view')">Вернуться в каталог</button>
-    </div>
+<div id="checkout" class="view">
+ <input id="name" placeholder="Имя">
+ <input id="phone" placeholder="Телефон">
+ <input id="city" placeholder="Город">
+ <button class="btn" onclick="send()">Отправить заказ</button>
+</div>
 
-    <div id="profile-view" class="view">
-        <div class="profile-header">
-            <div class="avatar"></div>
-            <div>
-                <h3 id="profile-name">Гость</h3>
-                <span id="profile-city" style="color: var(--accent-color)">Москва</span>
-            </div>
-        </div>
-        <div class="card" style="padding: 15px;">
-            <p>Здесь будет история ваших заказов.</p>
-        </div>
-    </div>
+<div class="bottom">
+ <div onclick="tab('catalog')">📂</div>
+ <div onclick="tab('cart')">🛒</div>
+</div>
 
-    <div id="about-view" class="view">
-        <h2>О проекте</h2>
-        <p>Мы — Armotek Films. 20 лет на рынке пленок.</p>
-        <p>Прямой дистрибьютор NAR PPF.</p>
-        <p><b>Почему этот бот?</b></p>
-        <ul>
-            <li>Быстрый заказ без звонков</li>
-            <li>Всегда актуальное наличие</li>
-            <li>История заказов под рукой</li>
-        </ul>
-    </div>
+<script>
+const tg = Telegram.WebApp; tg.expand();
 
-    <div id="checkout-view" class="view">
-        <button onclick="switchTab('cart-view')" style="background:none; border:none; color:var(--accent-color); margin-bottom:15px;">⬅ Назад в корзину</button>
-        
-        <div id="step-1">
-            <h3>1. Заказчик</h3>
-            <div class="form-group">
-                <label>Имя</label>
-                <input type="text" id="cust-name" placeholder="Иван Иванов">
-            </div>
-            <div class="form-group">
-                <label>Телефон</label>
-                <input type="tel" id="cust-phone" placeholder="89990000000">
-            </div>
-            <div class="form-group">
-                <label>Студия (необязательно)</label>
-                <input type="text" id="cust-studio">
-            </div>
-            <button class="main-btn" onclick="nextStep(2)">Далее</button>
-        </div>
+const products=[
+ {id:1,name:"Н190",price:45000},
+ {id:2,name:"Н190 (отрез)",price:2500},
+ {id:3,name:"Crystal Premium 215",price:52000},
+ {id:4,name:"Crystal Matte",price:50000},
+];
 
-        <div id="step-2" style="display:none;">
-            <h3>2. Адрес и Доставка</h3>
-            <div class="form-group">
-                <label>Город</label>
-                <select id="addr-city" onchange="updateProfileCity(this.value)">
-                    <option value="Москва">Москва</option>
-                    <option value="Другой">Другой (СДЭК/ТК)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Улица</label>
-                <input type="text" id="addr-street">
-            </div>
-            <div class="form-group">
-                <label>Дом / Офис</label>
-                <input type="text" id="addr-house">
-            </div>
-            <div class="form-group">
-                <label>Дата доставки</label>
-                <select id="del-date"></select> </div>
-            <div class="form-group">
-                <label>Время</label>
-                <select id="del-time">
-                    </select>
-            </div>
-            <div class="form-group">
-                <label>Комментарий</label>
-                <textarea id="del-comment" rows="3"></textarea>
-            </div>
-            <button class="main-btn" onclick="nextStep(3)">Далее</button>
-        </div>
+let cart = JSON.parse(localStorage.getItem("cart")||"[]");
 
-        <div id="step-3" style="display:none;">
-            <h3>3. Получатель</h3>
-            <div class="form-group" style="display:flex; align-items:center; gap:10px;">
-                <input type="checkbox" id="is-me-check" onchange="toggleReceiver()" style="width:20px;">
-                <label style="margin:0;">Я являюсь получателем</label>
-            </div>
-            <div id="receiver-form">
-                <div class="form-group">
-                    <label>Имя получателя</label>
-                    <input type="text" id="rec-name">
-                </div>
-                <div class="form-group">
-                    <label>Телефон получателя</label>
-                    <input type="tel" id="rec-phone">
-                </div>
-            </div>
-            <button class="main-btn" onclick="submitOrder()">✅ Подтвердить заказ</button>
-        </div>
-    </div>
+function save(){localStorage.setItem("cart",JSON.stringify(cart));}
 
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('catalog-view', this)">
-            <span class="nav-icon">📂</span> Каталог
-        </div>
-        <div class="nav-item" onclick="switchTab('cart-view', this)">
-            <span class="nav-icon">🛒</span> Корзина
-        </div>
-        <div class="nav-item" onclick="switchTab('profile-view', this)">
-            <span class="nav-icon">👤</span> Профиль
-        </div>
-        <div class="nav-item" onclick="switchTab('about-view', this)">
-            <span class="nav-icon">ℹ️</span> О проекте
-        </div>
-    </div>
+function render(){
+ const g=document.getElementById("grid"); g.innerHTML="";
+ products.forEach(p=>{
+  g.innerHTML+=`<div class=card>
+   <b>${p.name}</b><br>${p.price} ₽
+   <button class=btn onclick="add(${p.id})">В корзину</button>
+  </div>`;
+ });
+}
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        // --- DATA ---
-        // Имитация базы данных товаров
-        const products = [
-            { id: 1, brand: 'NAR', name: 'Н190', unit: 'рул.', price: '$$$' },
-            { id: 2, brand: 'NAR', name: 'Н190 (отрез)', unit: 'м.', price: '$$' },
-            { id: 3, brand: 'Crystal', name: 'Crystal Premium 215', unit: 'рул.', price: '$$$' },
-            { id: 4, brand: 'Crystal', name: 'Crystal Matte', unit: 'рул.', price: '$$$' },
-            { id: 5, brand: 'NAR', name: 'Лобаш', unit: 'рул.', price: '$$$' },
-            { id: 6, brand: 'NAR', name: 'Цветная пленка', unit: 'рул.', price: '$$$' }
-        ];
+function add(id){
+ let p=products.find(x=>x.id===id);
+ let c=cart.find(x=>x.id===id);
+ c?c.qty++:cart.push({...p,qty:1});
+ save(); alert("Добавлено");
+}
 
-        let cart = [];
-        let userProfile = { city: 'Москва', name: '', phone: '' };
+function showCart(){
+ let c=document.getElementById("cartItems"); c.innerHTML="";
+ let sum=0;
+ cart.forEach((i,n)=>{
+  sum+=i.price*i.qty;
+  c.innerHTML+=`${i.name} x${i.qty}<br>`;
+ });
+ document.getElementById("total").innerText="Сумма: "+sum+" ₽";
+}
 
-        // --- INIT ---
-        function init() {
-            renderCatalog('all');
-            
-            // Загрузка профиля
-            const saved = localStorage.getItem('armotek_profile');
-            if (saved) {
-                userProfile = JSON.parse(saved);
-                document.getElementById('profile-name').innerText = userProfile.name || tg.initDataUnsafe?.user?.first_name || 'Гость';
-                document.getElementById('profile-city').innerText = userProfile.city;
-                document.getElementById('addr-city').value = userProfile.city;
-                document.getElementById('cust-name').value = userProfile.name || '';
-                document.getElementById('cust-phone').value = userProfile.phone || '';
-            } else if (tg.initDataUnsafe?.user) {
-                document.getElementById('profile-name').innerText = tg.initDataUnsafe.user.first_name;
-            }
+function checkout(){
+ if(!cart.length) return alert("Корзина пуста");
+ tab('checkout');
+}
 
-            // Настройка кнопки "Город" в шапке
-            document.getElementById('city-selector').innerText = userProfile.city + ' ▼';
-        }
+function send(){
+ let data={
+  cart:cart,
+  customer:{
+   name:document.getElementById("name").value,
+   phone:document.getElementById("phone").value,
+   city:document.getElementById("city").value
+  },
+  total:cart.reduce((s,i)=>s+i.price*i.qty,0)
+ };
+ tg.sendData(JSON.stringify(data));
+ localStorage.removeItem("cart");
+}
 
-        // --- CATALOG LOGIC ---
-        function filterBrand(brand) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            renderCatalog(brand);
-        }
+function tab(id){
+ document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ if(id==="cart") showCart();
+}
 
-        function renderCatalog(filter) {
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = '';
-            products.forEach(p => {
-                if (filter !== 'all' && p.brand !== filter) return;
-                
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="card-img"></div> <div class="card-body">
-                        <div>
-                            <h4 class="card-title">${p.name}</h4>
-                            <span class="card-price">${p.brand}</span>
-                        </div>
-                        <button class="add-btn" onclick="addToCart(${p.id})">В корзину</button>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        // --- CART LOGIC ---
-        function addToCart(id) {
-            const prod = products.find(p => p.id === id);
-            const existing = cart.find(i => i.id === id);
-            if (existing) {
-                existing.qty++;
-            } else {
-                cart.push({ ...prod, qty: 1 });
-            }
-            tg.HapticFeedback.impactOccurred('light');
-            alert('Добавлено в корзину'); // Можно заменить на тост
-        }
-
-        function renderCart() {
-            const container = document.getElementById('cart-items');
-            container.innerHTML = '';
-            
-            if (cart.length === 0) {
-                container.innerHTML = '<div class="empty-cart"><h3>Корзина пуста 🛒</h3><p>Перейдите в каталог для выбора товаров</p></div>';
-                document.getElementById('checkout-btn').style.display = 'none';
-                return;
-            }
-            document.getElementById('checkout-btn').style.display = 'block';
-
-            cart.forEach((item, idx) => {
-                const el = document.createElement('div');
-                el.className = 'cart-item';
-                el.innerHTML = `
-                    <div>
-                        <b>${item.name}</b><br>
-                        <small>${item.brand}</small>
-                    </div>
-                    <div class="qty-control">
-                        <button class="qty-btn" onclick="updateQty(${idx}, -1)">-</button>
-                        <span>${item.qty} ${item.unit}</span>
-                        <button class="qty-btn" onclick="updateQty(${idx}, 1)">+</button>
-                    </div>
-                `;
-                container.appendChild(el);
-            });
-        }
-
-        function updateQty(idx, change) {
-            cart[idx].qty += change;
-            if (cart[idx].qty <= 0) cart.splice(idx, 1);
-            renderCart();
-        }
-
-        // --- CHECKOUT LOGIC ---
-        function startCheckout() {
-            switchTab('checkout-view');
-            populateDates();
-            document.getElementById('step-1').style.display = 'block';
-            document.getElementById('step-2').style.display = 'none';
-            document.getElementById('step-3').style.display = 'none';
-        }
-
-        function nextStep(step) {
-            if (step === 2) {
-                const name = document.getElementById('cust-name').value;
-                const phone = document.getElementById('cust-phone').value;
-                if (!name || !phone) return alert('Заполните Имя и Телефон');
-                
-                // Сохраняем профиль
-                userProfile.name = name;
-                userProfile.phone = phone;
-                saveProfile();
-
-                document.getElementById('step-1').style.display = 'none';
-                document.getElementById('step-2').style.display = 'block';
-                updateTimeSlots();
-            }
-            if (step === 3) {
-                const street = document.getElementById('addr-street').value;
-                if (!street) return alert('Укажите улицу');
-                document.getElementById('step-2').style.display = 'none';
-                document.getElementById('step-3').style.display = 'block';
-            }
-        }
-
-        function populateDates() {
-            const select = document.getElementById('del-date');
-            select.innerHTML = '';
-            const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-            
-            for(let i=0; i<7; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() + i);
-                const dayName = days[d.getDay()];
-                if (d.getDay() === 0) continue; // Skip Sunday
-                
-                const opt = document.createElement('option');
-                opt.value = d.toISOString().split('T')[0]; // YYYY-MM-DD
-                opt.text = `${dayName}, ${d.getDate()}.${d.getMonth()+1}`;
-                select.appendChild(opt);
-            }
-            select.addEventListener('change', updateTimeSlots);
-        }
-
-        function updateTimeSlots() {
-            const dateStr = document.getElementById('del-date').value;
-            const timeSelect = document.getElementById('del-time');
-            timeSelect.innerHTML = '';
-            
-            const d = new Date(dateStr);
-            const isSat = d.getDay() === 6;
-
-            if (isSat) {
-                timeSelect.add(new Option('10:00 - 15:00', '10-15'));
-            } else {
-                timeSelect.add(new Option('10:00 - 14:00', '10-14'));
-                timeSelect.add(new Option('14:00 - 18:00', '14-18'));
-                timeSelect.add(new Option('⚡️ СРОЧНО', 'urgent'));
-            }
-        }
-
-        function toggleReceiver() {
-            const isMe = document.getElementById('is-me-check').checked;
-            const form = document.getElementById('receiver-form');
-            form.style.display = isMe ? 'none' : 'block';
-        }
-
-        function submitOrder() {
-            const isMe = document.getElementById('is-me-check').checked;
-            
-            const orderData = {
-                cart: cart,
-                customer: {
-                    name: document.getElementById('cust-name').value,
-                    phone: document.getElementById('cust-phone').value,
-                    studio: document.getElementById('cust-studio').value
-                },
-                address: {
-                    city: document.getElementById('addr-city').value,
-                    street: document.getElementById('addr-street').value,
-                    house: document.getElementById('addr-house').value
-                },
-                delivery: {
-                    date: document.getElementById('del-date').value,
-                    time: document.getElementById('del-time').value,
-                    type: document.getElementById('del-time').value === 'urgent' ? 'urgent' : 'standard'
-                },
-                comment: document.getElementById('del-comment').value,
-                receiver: {
-                    is_me: isMe,
-                    name: isMe ? '' : document.getElementById('rec-name').value,
-                    phone: isMe ? '' : document.getElementById('rec-phone').value
-                }
-            };
-
-            tg.sendData(JSON.stringify(orderData));
-        }
-
-        // --- UTILS ---
-        function switchTab(viewId, navEl) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            
-            // Скрыть фильтры если не каталог
-            const filters = document.getElementById('catalog-filters');
-            filters.style.display = viewId === 'catalog-view' ? 'flex' : 'none';
-
-            if (navEl) {
-                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                navEl.classList.add('active');
-            }
-
-            if (viewId === 'cart-view') renderCart();
-        }
-
-        function updateProfileCity(city) {
-            userProfile.city = city;
-            saveProfile();
-            document.getElementById('city-selector').innerText = city + ' ▼';
-            document.getElementById('profile-city').innerText = city;
-        }
-
-        function saveProfile() {
-            localStorage.setItem('armotek_profile', JSON.stringify(userProfile));
-        }
-
-        init();
-    </script>
+render();
+</script>
 </body>
 </html>
