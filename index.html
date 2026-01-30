@@ -2,139 +2,165 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>NarPPF</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Armotek Catalog</title>
 
-    <!-- Telegram WebApp -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+    <!-- ===== ВНЕШКА БЕЗ ИЗМЕНЕНИЙ ===== -->
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f6f6f6;
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #ffffff;
+            --accent-color: #D4AF37;
+            --secondary-text: #a0a0a0;
         }
-        header {
-            padding: 16px;
-            background: #111;
-            color: #fff;
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding-bottom: 80px;
+        }
+        .header {
+            padding: 15px;
+            background: var(--card-bg);
             text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
             font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 10px;
         }
         .filters {
             display: flex;
-            gap: 8px;
-            padding: 12px;
-            background: #fff;
+            justify-content: center;
+            gap: 10px;
         }
         .filter-btn {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            background: #fff;
-            cursor: pointer;
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
         }
         .filter-btn.active {
-            background: #111;
-            color: #fff;
+            background: var(--accent-color);
+            color: #000;
         }
-        #product-grid {
-            padding: 12px;
+        .grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
         }
         .card {
-            background: #fff;
-            padding: 12px;
-            border-radius: 8px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-img {
+            height: 120px;
+            background: #333;
+        }
+        .card-body {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
         }
         .add-btn {
-            margin-top: 8px;
-            width: 100%;
+            background: var(--accent-color);
+            border: none;
             padding: 8px;
+            border-radius: 5px;
+            font-weight: bold;
         }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+        }
+        .nav-item {
+            text-align: center;
+            font-size: 10px;
+            color: var(--secondary-text);
+        }
+        .nav-item.active {
+            color: var(--accent-color);
+        }
+        .view { display: none; padding: 10px; }
+        .view.active { display: block; }
     </style>
 </head>
 
 <body>
 
-<header>NarPPF Catalog</header>
-
-<div class="filters">
-    <button class="filter-btn active" onclick="filterBrand('all')">Все</button>
-    <button class="filter-btn" onclick="filterBrand('NAR')">NAR</button>
-    <button class="filter-btn" onclick="filterBrand('Crystal')">Crystal</button>
+<div class="header">
+    <div class="logo">ARMOTEK FILMS</div>
+    <div id="city-selector" style="font-size:12px;color:var(--secondary-text)">Москва ▼</div>
+    <div class="filters" id="catalog-filters">
+        <button class="filter-btn active" onclick="filterBrand('all', this)">Все</button>
+        <button class="filter-btn" onclick="filterBrand('NAR', this)">NAR PPF</button>
+        <button class="filter-btn" onclick="filterBrand('Crystal', this)">Crystal</button>
+    </div>
 </div>
 
-<div id="product-grid"></div>
-
-<!-- ===== БЛОК ДОСТАВКИ ===== -->
-<div style="padding:12px;background:#fff;margin-top:12px;border-top:1px solid #eee;">
-
-    <h3 style="margin:0 0 12px 0;">Доставка</h3>
-
-    <div style="margin-bottom:10px;">
-        <label>Город</label><br>
-        <select id="city" style="width:100%;padding:8px;">
-            <option value="Москва">Москва</option>
-            <option value="СПб">Санкт-Петербург</option>
-            <option value="Регионы">Регионы</option>
-        </select>
-    </div>
-
-    <div style="margin-bottom:10px;">
-        <label>Тип доставки</label><br>
-        <select id="deliveryType" style="width:100%;padding:8px;">
-            <option value="courier">Курьер</option>
-            <option value="cdek">СДЭК</option>
-            <option value="pickup">Самовывоз</option>
-        </select>
-    </div>
-
-    <div style="margin-bottom:10px;">
-        <label>Дата</label><br>
-        <select id="deliveryDate" style="width:100%;padding:8px;"></select>
-    </div>
-
-    <div>
-        <label>Время</label><br>
-        <select id="deliveryTime" style="width:100%;padding:8px;"></select>
-    </div>
-
+<div id="catalog-view" class="view active">
+    <div class="grid" id="product-grid"></div>
 </div>
-<!-- ===== /БЛОК ДОСТАВКИ ===== -->
 
+<div id="cart-view" class="view">
+    <h2>Корзина</h2>
+    <div id="cart-items"></div>
+</div>
+
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('catalog-view', this)">📂<br>Каталог</div>
+    <div class="nav-item" onclick="switchTab('cart-view', this)">🛒<br>Корзина</div>
+</div>
+
+<!-- ===== ИСПРАВЛЕННЫЙ JS ===== -->
 <script>
 (function () {
 
-    if (window.Telegram && window.Telegram.WebApp) {
-        Telegram.WebApp.expand();
-    }
+    var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    if (tg) tg.expand();
 
     var products = [
-        { id: 1, brand: 'NAR', name: 'NAR PPF 190' },
-        { id: 2, brand: 'NAR', name: 'NAR PPF 215' },
-        { id: 3, brand: 'Crystal', name: 'Crystal Premium' },
+        { id: 1, brand: 'NAR', name: 'Н190' },
+        { id: 2, brand: 'NAR', name: 'Н190 (отрез)' },
+        { id: 3, brand: 'Crystal', name: 'Crystal Premium 215' },
         { id: 4, brand: 'Crystal', name: 'Crystal Matte' }
     ];
 
-    window.filterBrand = function (brand) {
-        var btns = document.getElementsByClassName('filter-btn');
-        for (var i = 0; i < btns.length; i++) {
-            btns[i].classList.remove('active');
+    var cart = [];
+
+    window.filterBrand = function (brand, btn) {
+        var buttons = document.getElementsByClassName('filter-btn');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.remove('active');
         }
-
-        if (brand === 'all') btns[0].classList.add('active');
-        if (brand === 'NAR') btns[1].classList.add('active');
-        if (brand === 'Crystal') btns[2].classList.add('active');
-
+        if (btn) btn.classList.add('active');
         renderCatalog(brand);
     };
 
     function renderCatalog(filter) {
         var grid = document.getElementById('product-grid');
         grid.innerHTML = '';
-
         for (var i = 0; i < products.length; i++) {
             var p = products[i];
             if (filter !== 'all' && p.brand !== filter) continue;
@@ -142,13 +168,30 @@
             var card = document.createElement('div');
             card.className = 'card';
             card.innerHTML =
-                '<b>' + p.name + '</b><br>' +
-                '<small>' + p.brand + '</small><br>' +
-                '<button class="add-btn">В корзину</button>';
-
+                '<div class="card-img"></div>' +
+                '<div class="card-body">' +
+                '<b>' + p.name + '</b>' +
+                '<button class="add-btn" onclick="addToCart(' + p.id + ')">В корзину</button>' +
+                '</div>';
             grid.appendChild(card);
         }
     }
+
+    window.addToCart = function (id) {
+        cart.push(id);
+        if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        alert('Добавлено в корзину');
+    };
+
+    window.switchTab = function (viewId, el) {
+        var views = document.getElementsByClassName('view');
+        for (var i = 0; i < views.length; i++) views[i].classList.remove('active');
+        document.getElementById(viewId).classList.add('active');
+
+        var nav = document.getElementsByClassName('nav-item');
+        for (var j = 0; j < nav.length; j++) nav[j].classList.remove('active');
+        if (el) el.classList.add('active');
+    };
 
     renderCatalog('all');
 
