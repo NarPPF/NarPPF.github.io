@@ -582,23 +582,34 @@
             document.getElementById('total-price').innerText = total.toLocaleString() + ' ₽';
         }
 
-        function sendOrder() {
-            if (userProfile.address === 'Не указан') {
-                alert("Пожалуйста, укажите адрес доставки в профиле (используйте карту).");
-                switchTab('profile-view', document.querySelectorAll('.nav-item')[2]);
-                return;
-            }
+function sendOrder() {
+    if (cart.length === 0) {
+        alert('Корзина пуста!');
+        return;
+    }
 
-            let orderItems = [];
-            let total = 0;
-            for (const id in cart) {
-                if (cart[id] > 0) {
-                    const p = products.find(x => x.id == id);
-                    const price = isDealer ? p.dealerPrice : p.retailPrice;
-                    orderItems.push({ name: p.name, qty: cart[id], price: price });
-                    total += price * cart[id];
-                }
-            }
+    const orderData = {
+        items: cart,
+        total: calculateTotal(),
+        user: userProfile,
+        timestamp: new Date().toISOString()
+    };
+
+    // ПРОВЕРКА: Работаем ли мы внутри Telegram
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        
+        // Отправляем данные боту (строкой JSON)
+        tg.sendData(JSON.stringify(orderData)); 
+        
+        // Закрываем мини-приложение
+        tg.close();
+    } else {
+        // Фоллбек для обычного браузера
+        console.log("Order Data:", orderData);
+        alert('Заказ сформирован! (Вне Telegram данные не отправлены)');
+    }
+}
 
             const orderData = {
                 cart: orderItems,
@@ -628,3 +639,4 @@
     </script>
 </body>
 </html>
+
