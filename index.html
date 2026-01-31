@@ -3,87 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Armotek Premium Store</title>
+    <title>Armotek Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=776970988-YOUR-KEY-IF-NEEDED"></script>
-    
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=776970988-YOUR-KEY" type="text/javascript"></script>
     <style>
-        :root { --accent: #D4AF37; --bg: #000; --card: #111; --text: #fff; }
-        body { 
-            background: var(--bg); color: var(--text); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; padding-bottom: 80px; overflow-x: hidden; 
-        }
-
-        /* Шапка с кнопкой Назад */
-        .app-header {
-            display: flex; align-items: center; padding: 15px;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #222;
-        }
-        .back-btn { 
-            background: none; border: none; color: var(--accent); 
-            font-size: 20px; display: none; padding-right: 15px; cursor: pointer;
-        }
+        :root { --accent: #D4AF37; --bg: #000; --card: #111; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 80px; }
+        
+        .app-bar { display: flex; align-items: center; padding: 15px; background: #080808; border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 1000; }
+        .back-btn { background: none; border: none; color: var(--accent); font-size: 20px; display: none; padding-right: 15px; cursor: pointer; }
         .back-btn.visible { display: block; }
-        .page-title { font-weight: bold; font-size: 18px; }
 
-        /* Контентные зоны */
-        .view { display: none; padding: 15px; animation: fadeIn 0.3s ease; }
+        .view { display: none; padding: 15px; }
         .view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Карточки и кнопки */
-        .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 15px; border: 1px solid #222; }
-        .main-btn { 
-            background: var(--accent); color: #000; width: 100%; padding: 16px; 
-            border-radius: 12px; font-weight: bold; border: none; cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .main-btn:active { transform: scale(0.98); }
-        .main-btn:disabled { opacity: 0.3; filter: grayscale(1); }
+        .card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid #222; }
+        .prod-img { width: 100%; height: 150px; background: #222; border-radius: 8px; margin-bottom: 10px; object-fit: cover; }
+        
+        .main-btn { background: var(--accent); color: #000; width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; }
+        .main-btn:disabled { opacity: 0.3; }
 
-        /* Поля ввода */
-        input { 
-            width: 100%; padding: 12px; background: #1a1a1a; color: #fff; 
-            border: 1px solid #333; border-radius: 10px; margin-top: 8px; box-sizing: border-box; 
-        }
+        /* Стили карты */
+        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; }
+        #map { width: 100%; height: 70%; }
+        .map-controls { padding: 15px; height: 30%; box-sizing: border-box; background: #080808; }
+        
+        input { width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
 
-        /* Карта во весь экран */
-        #map-container { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; z-index: 2000; 
-        }
-
-        /* Навигация внизу */
-        .nav-bar { 
-            position: fixed; bottom: 0; width: 100%; display: flex; 
-            background: rgba(10,10,10,0.95); border-top: 1px solid #222; 
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        .nav-item { 
-            flex: 1; padding: 15px 5px; text-align: center; color: #555; 
-            background: none; border: none; font-size: 11px; cursor: pointer;
-        }
-        .nav-item.active { color: var(--accent); font-weight: bold; }
+        .nav-bottom { position: fixed; bottom: 0; width: 100%; display: flex; background: #0a0a0a; border-top: 1px solid #222; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { flex: 1; padding: 15px; text-align: center; color: #555; background: none; border: none; font-size: 10px; letter-spacing: 1px; }
+        .nav-item.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <div class="app-header">
+    <div class="app-bar">
         <button id="back-btn" class="back-btn" onclick="goBack()">❮</button>
-        <div id="page-title" class="page-title">Armotek Store</div>
+        <b id="page-title">Armotek Store</b>
     </div>
 
     <div id="catalog-view" class="view active">
-        <div class="card">
-            <h3 style="margin-top:0">Пленка Armotek Onyx</h3>
-            <p style="color:#888; font-size:14px">Премиальная защита вашего авто.</p>
-            <div style="display:flex; justify-content:space-between; align-items:center">
-                <span style="font-weight:bold; color:var(--accent)">15 900 ₽</span>
-                <button class="main-btn" style="width:auto; padding:8px 20px" onclick="addToCart('Armotek Onyx', 15900)">В корзину</button>
-            </div>
-        </div>
-        </div>
+        <div id="products-grid"></div>
+    </div>
 
-    <div id="
+    <div id="cart-view" class="view">
+        <div id="cart-list"></div>
+        <div class="card" id="address-block" style="display:none">
+            <label style="font-size:12px; color:var(--accent)">АДРЕС ДОСТАВКИ:</label>
+            <input type="text" id="final-addr" placeholder="Нажмите для выбора на карте" readonly onclick="openMap()">
+            <button id="order-btn" class="main-btn" onclick="sendOrder()">Заказать</button>
+        </div>
+    </div>
+
+    <div id="profile-view" class="view">
+        <div class="card">
+            <h3>Ваш профиль</h3>
+            <input type="tel" id="u-phone" placeholder="Ваш телефон">
+            <input type="text" id="u-city" placeholder="Ваш город">
+        </div>
+    </div>
+
+    <div id="map-overlay">
+        <div id="map"></div>
+        <div class="map-controls">
+            <label style="color:var(--accent); font-size: 12px;">ПОДТВЕРДИТЕ ИЛИ КОРРЕКТИРУЙТЕ АДРЕС:</label>
+            <input type="text" id="map-search" placeholder="Кликните на карту или введите адрес">
+            <button class="main-btn" onclick="closeMap()">Подтвердить адрес</button>
+            <button class="main-btn" style="background:none; color:#666; margin-top:5px;" onclick="document.getElementById('map-overlay').style.display='none'">Отмена</button>
+        </div>
+    </div>
+
+    <nav class="nav-bottom">
+        <button class="nav-item active" onclick="navigate('catalog-view')">КАТАЛОГ</button>
+        <button class="nav-item" onclick="navigate('cart-view')">КОРЗИНА</button>
+        <button class="nav-item" onclick="navigate('profile-view')">ПРОФИЛЬ</button>
+    </nav>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        let cart = [];
+        let stack = ['catalog-view'];
+
+        // Список товаров (потом заменим на Excel)
+        const products = [
+            {id: 1, name: "Armotek Onyx (1.52m)", price: 15900, img: "https://via.placeholder.com/300x150/111/D4AF37?text=Onyx"},
+            {id: 2, name: "Armotek Matte (1.52m)", price: 17200, img: "https://via.placeholder.com/300x150/111/D4AF37?text=Matte"},
+            {id: 3, name: "Инструмент Carbon Pro", price: 2500, img: "https://via.placeholder.com/300x150/111/D4AF37?text=Tools"}
+        ];
+
+        function renderCatalog() {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = products.map(p => `
+                <div class="card">
+                    <img src="${p.img}" class="prod-img">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <div>
+                            <div style="font-weight:bold">${p.name}</div>
+                            <div style="color:var(--accent)">${p.price} ₽</div>
+                        </div>
+                        <button class="main-btn" style="width:auto; padding:8px 15px" onclick="addToCart(${p.id})">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(id) {
+            const p = products.find(i => i.id === id);
+            cart.push(p);
+            tg.HapticFeedback.notificationOccurred('success');
+            renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            if(cart.length === 0) {
+                list.innerHTML = "<center style='margin-top:50px; color:#444'>Корзина пуста</center>";
+                document.getElementById('address-block').style.display = 'none';
+            } else {
+                list.innerHTML = cart.map(i => `<div class="card">${i.name} - ${i.price} ₽</div>`).join('');
+                document.getElementById('address-block').style.display = 'block';
+            }
+        }
+
+        function navigate(id) {
+            if (stack[stack.length - 1] === id) return;
+            stack.push(id);
+            updateUI();
+        }
+
+        function goBack() {
+            if (stack.length > 1) { stack.pop(); updateUI(); }
+        }
+
+        function updateUI() {
+            const current = stack[stack.length - 1];
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(current).classList.add('active');
+            document.getElementById('back-btn').classList.toggle('visible', stack.length > 1);
+            document.querySelectorAll('.nav-item').forEach(i => {
+                i.classList.toggle('active', i.innerText.toLowerCase().includes(current.split('-')[0]));
+            });
+        }
+
+        // КАРТА
+        let myMap;
+        function openMap() {
+            document.getElementById('map-overlay').style.display = 'block';
+            if (!myMap) {
+                ymaps.ready(() => {
+                    myMap = new ymaps.Map("map", { center: [55.75, 37.62], zoom: 11, controls: ['zoomControl'] });
+                    
+                    // Клик по карте
+                    myMap.events.add('click', function (e) {
+                        const coords = e.get('coords');
+                        getAddress(coords);
+                    });
+                });
+            }
+        }
+
+        function getAddress(coords) {
+            ymaps.geocode(coords).then(res => {
+                const addr = res.geoObjects.get(0).getAddressLine();
+                document.getElementById('map-search').value = addr;
+                myMap.geoObjects.removeAll();
+                myMap.geoObjects.add(new ymaps.Placemark(coords));
+            });
+        }
+
+        function closeMap() {
+            const val = document.getElementById('map-search').value;
+            if (val) {
+                document.getElementById('final-addr').value = val;
+                document.getElementById('map-overlay').style.display = 'none';
+            } else {
+                alert("Пожалуйста, выберите точку на карте");
+            }
+        }
+
+        function sendOrder() {
+            const data = {
+                cart: cart,
+                address: document.getElementById('final-addr').value,
+                total: cart.reduce((s, i) => s + i.price, 0)
+            };
+            tg.sendData(JSON.stringify(data));
+        }
+
+        tg.expand();
+        renderCatalog();
+    </script>
+</body>
+</html>
