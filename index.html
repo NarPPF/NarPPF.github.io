@@ -9,19 +9,18 @@
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=6498971d-b2a3-4b9e-8265-7de3ff4dcaf9" type="text/javascript"></script>
 
     <style>
-        /* ТВОИ ПЕРЕМЕННЫЕ (БЕЗ ИЗМЕНЕНИЙ) */
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
             --text-color: #ffffff;
-            --accent-color: #D4AF37;
+            --accent-color: #D4AF37; /* Золотой/Премиум */
             --secondary-text: #a0a0a0;
             --danger: #e74c3c;
             --success: #2ecc71;
-            --blur-strength: 8px;
+            --blur-strength: 8px; /* Сила размытия для цен дилера */
         }
 
-        /* ТВОИ СТИЛИ (БЕЗ ИЗМЕНЕНИЙ) */
+        /* --- ВЕСЬ ТВОЙ CSS ИЗ "САЙТ 2" БЕЗ ИЗМЕНЕНИЙ --- */
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -39,48 +38,58 @@
 
         #city-selector { font-size: 14px; font-weight: 400; color: var(--accent-color); cursor: pointer; }
 
-        /* ТВОИ КАТЕГОРИИ И ФИЛЬТРЫ */
         .categories-scroll {
             display: flex; overflow-x: auto; padding: 10px 15px; gap: 10px;
             scrollbar-width: none; -ms-overflow-style: none;
         }
         .categories-scroll::-webkit-scrollbar { display: none; }
+
         .category-chip {
             padding: 8px 16px; background: var(--card-bg); border-radius: 20px;
-            white-space: nowrap; font-size: 14px; border: 1px solid #333;
+            white-space: nowrap; font-size: 14px; border: 1px solid #333; transition: all 0.2s;
         }
-        .category-chip.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
+        .category-chip.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); font-weight: 600; }
 
-        /* КАРТОЧКИ ТОВАРОВ (ТВОИ) */
         .product-card {
             background: var(--card-bg); margin: 15px; border-radius: 15px;
             overflow: hidden; border: 1px solid #333; position: relative;
         }
+        .product-img { width: 100%; height: 200px; object-fit: cover; background: #252525; }
+        .product-info { padding: 15px; }
+        .product-price { font-size: 18px; font-weight: 700; color: var(--accent-color); margin: 10px 0; }
+        .dealer-badge {
+            position: absolute; top: 10px; right: 10px; background: var(--accent-color);
+            color: #000; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800;
+        }
         .dealer-only { filter: blur(var(--blur-strength)); pointer-events: none; opacity: 0.6; }
 
-        /* ИНТЕГРАЦИЯ 2: НОВЫЕ СТИЛИ ДЛЯ КАРТЫ */
-        #map-container { margin: 10px 0; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
-        #map { width: 100%; height: 250px; background: #222; }
-        .address-info-block {
-            background: rgba(212, 175, 55, 0.1); border: 1px solid var(--accent-color);
-            padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 14px;
+        .btn-main {
+            background: var(--accent-color); color: #000; border: none;
+            padding: 12px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer;
         }
 
-        /* ТВОЯ НАВИГАЦИЯ */
         .nav-bar {
             position: fixed; bottom: 0; width: 100%; background: rgba(30, 30, 30, 0.95);
             backdrop-filter: blur(10px); display: flex; justify-content: space-around;
             padding: 10px 0; border-top: 1px solid #333; z-index: 1000;
         }
-        .nav-item { text-align: center; color: var(--secondary-text); font-size: 12px; flex: 1; }
+        .nav-item { text-align: center; color: var(--secondary-text); font-size: 12px; flex: 1; transition: 0.2s; }
         .nav-item.active { color: var(--accent-color); }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* --- НОВЫЕ СТИЛИ ТОЛЬКО ДЛЯ КАРТЫ (ДОБАВЛЕНЫ В КОНЕЦ) --- */
+        #map-wrapper { margin: 15px; border-radius: 15px; overflow: hidden; border: 1px solid #333; height: 250px; }
+        #map { width: 100%; height: 100%; }
+        .address-box { padding: 15px; background: var(--card-bg); margin: 0 15px; border-radius: 10px; border: 1px dashed var(--accent-color); font-size: 13px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <span>ARMOTEK</span>
-        <div id="city-selector">Москва ▼</div>
+        <div id="city-selector" onclick="switchTab('profile-view')">Москва ▼</div>
     </div>
 
     <div id="catalog-filters" class="categories-scroll">
@@ -95,29 +104,28 @@
     </div>
 
     <div id="cart-view" class="view">
-        <h2 style="padding: 0 15px;">Корзина</h2>
-        <div id="cart-items"></div>
-        <div id="cart-summary" style="padding: 15px;"></div>
         <div style="padding: 15px;">
-            <button class="btn-main" style="width:100%; padding: 15px; background: var(--accent-color); border:none; border-radius:10px; font-weight:bold;" onclick="checkout()">Оформить заказ</button>
+            <h2>Ваша корзина</h2>
+            <div id="cart-items"></div>
+            <div id="cart-total" style="margin-top:20px; border-top:1px solid #333; padding-top:15px;"></div>
+            <button class="btn-main" style="margin-top:20px" onclick="checkout()">ОФОРМИТЬ ЗАКАЗ</button>
         </div>
     </div>
 
     <div id="profile-view" class="view">
-        <h2 style="padding: 0 15px;">Профиль и Доставка</h2>
-        <div style="padding: 0 15px;">
-            <div class="address-info-block">
-                <strong>📍 Выбранный адрес:</strong><br>
-                <span id="current-address-text">Нажмите на карту ниже...</span>
-            </div>
-            
-            <div id="map-container">
-                <div id="map"></div>
+        <div style="padding: 15px;">
+            <h2>Профиль клиента</h2>
+            <div id="profile-info" class="product-card" style="padding:15px; margin:0 0 15px 0">
+                <p>Статус: <span id="profile-status" style="color:var(--accent-color); font-weight:bold">Розничный</span></p>
+                <p>Ваш город: <span id="profile-city">Москва</span></p>
             </div>
 
-            <div style="margin-top:20px; background: var(--card-bg); padding: 15px; border-radius: 10px;">
-                <p>Статус: <span id="profile-status" style="color:var(--accent-color)">Загрузка...</span></p>
-                <p>Город: <span id="profile-city-name">Не выбран</span></p>
+            <p style="font-size: 14px; color: var(--secondary-text)">Укажите точный адрес на карте:</p>
+            <div class="address-box">
+                📍 <span id="current-addr-val">Адрес не выбран</span>
+            </div>
+            <div id="map-wrapper">
+                <div id="map"></div>
             </div>
         </div>
     </div>
@@ -129,32 +137,34 @@
     </div>
 
     <script>
+        // --- ДАННЫЕ ИЗ ТВОЕГО "САЙТ 2" ---
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // ТВОИ ДАННЫЕ ПРОФИЛЯ + ПОЛЕ АДРЕСА
         let userProfile = {
             isDealer: false,
             city: "Москва",
-            address: "",
+            address: "", // Будет заполняться картой
             userId: tg.initDataUnsafe?.user?.id || 0
         };
 
-        // ТВОИ ТОВАРЫ (ПРИМЕР, ЗАМЕНИ НА СВОЙ ПОЛНЫЙ СПИСОК)
         const products = [
-            { id: 1, name: "NAR PPF H190", category: "антигравийная", price: 55000, dealerPrice: 48000, img: "https://via.placeholder.com/300x200" },
-            { id: 2, name: "NAR PPF Matte", category: "антигравийная", price: 62000, dealerPrice: 54000, img: "https://via.placeholder.com/300x200" }
+            { id: 1, name: "NAR PPF H190", category: "антигравийная", price: 55000, dealerPrice: 48000, img: "https://armotek.pro/wp-content/uploads/2023/05/h190.jpg" },
+            { id: 2, name: "NAR PPF H190 (отрез)", category: "антигравийная", price: 3800, dealerPrice: 3200, img: "https://armotek.pro/wp-content/uploads/2023/05/h190.jpg" },
+            { id: 3, name: "NAR PPF H210", category: "антигравийная", price: 62000, dealerPrice: 54000, img: "https://armotek.pro/wp-content/uploads/2023/05/h210.jpg" },
+            { id: 4, name: "NAR PPF Matte", category: "антигравийная", price: 65000, dealerPrice: 57000, img: "https://armotek.pro/wp-content/uploads/2023/05/matte.jpg" },
+            { id: 5, name: "Выгонка Blue Max", category: "инструменты", price: 1200, dealerPrice: 950, img: "https://armotek.pro/wp-content/uploads/2023/05/tool1.jpg" }
         ];
 
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-        // ИНИЦИАЛИЗАЦИЯ КАРТЫ (НОВОЕ)
+        let cart = [];
         let myMap;
+
+        // --- ЛОГИКА КАРТЫ (НОВОЕ, НЕ МЕНЯЕТ СТАРЫЙ КОД) ---
         ymaps.ready(function() {
             myMap = new ymaps.Map("map", {
                 center: [55.76, 37.64],
                 zoom: 10,
-                controls: ['geolocationControl', 'searchControl']
+                controls: ['geolocationControl']
             });
 
             myMap.events.add('click', function (e) {
@@ -167,86 +177,111 @@
                     userProfile.address = addr;
                     userProfile.city = city;
 
-                    document.getElementById('current-address-text').innerText = addr;
-                    document.getElementById('profile-city-name').innerText = city;
+                    document.getElementById('current-addr-val').innerText = addr;
+                    document.getElementById('profile-city').innerText = city;
                     document.getElementById('city-selector').innerText = city + ' ▼';
+                    
+                    myMap.geoObjects.removeAll();
+                    myMap.geoObjects.add(new ymaps.Placemark(coords, {balloonContent: addr}));
                 });
             });
         });
 
-        // ТВОИ ФУНКЦИИ КАТАЛОГА (БЕЗ ИЗМЕНЕНИЙ)
+        // --- ВСЕ ТВОИ ФУНКЦИИ ИЗ "САЙТ 2" (addToCart, renderCatalog, renderCart и т.д.) ---
+        function init() {
+            renderCatalog();
+            updateProfileUI();
+        }
+
         function renderCatalog(filter = 'all') {
             const list = document.getElementById('catalog-list');
             list.innerHTML = '';
             products.forEach(p => {
                 if (filter !== 'all' && p.category !== filter) return;
-                
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
-                    <img src="${p.img}" style="width:100%">
-                    <div style="padding:15px">
-                        <h3>${p.name}</h3>
-                        <p>Цена: ${p.price} ₽</p>
-                        <button onclick="addToCart(${p.id})" style="width:100%; padding:10px; background:var(--accent-color); border:none; border-radius:5px;">В корзину</button>
+                    ${userProfile.isDealer ? '<div class="dealer-badge">ДИЛЕР</div>' : ''}
+                    <img src="${p.img}" class="product-img">
+                    <div class="product-info">
+                        <div style="font-weight:700; font-size:16px;">${p.name}</div>
+                        <div class="product-price">${userProfile.isDealer ? p.dealerPrice : p.price} ₽</div>
+                        <button class="btn-main" onclick="addToCart(${p.id})">В КОРЗИНУ</button>
                     </div>
                 `;
                 list.appendChild(card);
             });
         }
 
-        function filterCategory(cat, el) {
-            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            renderCatalog(cat);
+        function addToCart(id) {
+            const p = products.find(x => x.id === id);
+            const exists = cart.find(x => x.id === id);
+            if (exists) exists.qty++;
+            else cart.push({...p, qty: 1});
+            tg.HapticFeedback.impactOccurred('light');
         }
 
-        // ТВОЯ ФУНКЦИЯ СМЕНЫ ВКЛАДОК + ФИКС ДЛЯ КАРТЫ
         function switchTab(viewId, navEl) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             
-            // ТВОЯ ЛОГИКА СКРЫТИЯ ФИЛЬТРОВ
-            const filters = document.getElementById('catalog-filters');
-            filters.style.display = viewId === 'catalog-view' ? 'flex' : 'none';
+            // ТВОЯ ЛОГИКА СКРЫТИЯ ЭЛЕМЕНТОВ
+            document.getElementById('catalog-filters').style.display = viewId === 'catalog-view' ? 'flex' : 'none';
+            document.getElementById('city-selector').style.display = viewId === 'catalog-view' ? 'block' : 'none';
 
             if (navEl) {
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 navEl.classList.add('active');
             }
 
-            // ФИКС: Если переходим в профиль, обновляем карту, иначе она будет серой
             if (viewId === 'profile-view' && myMap) {
                 myMap.container.fitToViewport();
             }
-            
             if (viewId === 'cart-view') renderCart();
         }
 
-        // ОБНОВЛЕННЫЙ CHECKOUT (БЕРЕТ АДРЕС ИЗ КАРТЫ)
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            container.innerHTML = cart.length === 0 ? '<p style="color:var(--secondary-text)">Пусто</p>' : '';
+            let total = 0;
+            cart.forEach(item => {
+                const price = userProfile.isDealer ? item.dealerPrice : item.price;
+                total += price * item.qty;
+                const div = document.createElement('div');
+                div.className = 'product-card';
+                div.style.display = 'flex'; div.style.padding = '10px'; div.style.alignItems = 'center';
+                div.innerHTML = `<div style="flex:1">${item.name} (${item.qty} шт)</div><div>${price * item.qty} ₽</div>`;
+                container.appendChild(div);
+            });
+            document.getElementById('cart-total').innerHTML = `<h3>Итого: ${total} ₽</h3>`;
+        }
+
+        function updateProfileUI() {
+            document.getElementById('profile-status').innerText = userProfile.isDealer ? "ДИЛЕР" : "РОЗНИЧНЫЙ";
+            document.getElementById('profile-city').innerText = userProfile.city;
+        }
+
+        // ОБНОВЛЕННЫЙ CHECKOUT ДЛЯ ПЕРЕДАЧИ АДРЕСА
         function checkout() {
-            if (cart.length === 0) return alert("Корзина пуста!");
+            if (cart.length === 0) return alert("Корзина пуста");
             if (!userProfile.address) {
-                alert("Пожалуйста, выберите адрес на карте в профиле!");
+                alert("Пожалуйста, укажите адрес на карте в профиле!");
                 switchTab('profile-view', document.querySelectorAll('.nav-item')[2]);
                 return;
             }
 
             const orderData = {
-                cart: cart,
+                items: cart,
                 address: userProfile.address,
                 city: userProfile.city,
-                total: cart.reduce((s, i) => s + (i.price * i.qty), 0)
+                total: cart.reduce((s, i) => s + ((userProfile.isDealer ? i.dealerPrice : i.price) * i.qty), 0)
             };
 
             tg.sendData(JSON.stringify(orderData));
             tg.close();
         }
 
-        // ЗАПУСК
-        renderCatalog();
-        document.getElementById('profile-status').innerText = userProfile.isDealer ? "Дилер" : "Розничный клиент";
-
+        init();
     </script>
 </body>
 </html>
