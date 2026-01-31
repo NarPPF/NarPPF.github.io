@@ -8,77 +8,103 @@
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=776970988-YOUR-KEY" type="text/javascript"></script>
     
     <style>
-        :root { --accent: #D4AF37; --bg: #000; --card: #111; --text: #fff; }
+        :root { --accent: #D4AF37; --bg: #000; --card: #111; --text: #fff; --green: #28a745; }
         body { 
             background: var(--bg); color: var(--text); 
             font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
-            margin: 0; padding-bottom: 80px; overflow-x: hidden; 
+            margin: 0; padding-bottom: 90px; overflow-x: hidden; 
+            -webkit-tap-highlight-color: transparent;
         }
         
-        /* Верхняя панель */
+        /* HEADER */
         .app-bar { 
             display: flex; align-items: center; padding: 15px; 
-            background: rgba(0,0,0,0.9); border-bottom: 1px solid #222; 
-            position: sticky; top: 0; z-index: 1000; 
+            background: rgba(0,0,0,0.95); border-bottom: 1px solid #222; 
+            position: sticky; top: 0; z-index: 1000; height: 50px;
         }
         .back-btn { background: none; border: none; color: var(--accent); font-size: 24px; display: none; padding-right: 15px; cursor: pointer; }
         .back-btn.visible { display: block; }
-        .page-title { font-weight: bold; font-size: 18px; }
+        .page-title { font-weight: 700; font-size: 18px; letter-spacing: 0.5px; }
 
-        /* Вьюхи */
-        .view { display: none; padding: 15px; animation: fadeIn 0.2s; }
+        /* VIEWS */
+        .view { display: none; padding: 15px; animation: fadeIn 0.2s ease-out; }
         .view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Элементы */
-        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #222; }
+        /* CARDS & UI */
+        .card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 12px; border: 1px solid #222; position: relative; }
         .main-btn { 
             background: var(--accent); color: #000; width: 100%; padding: 16px; 
-            border-radius: 12px; font-weight: bold; border: none; cursor: pointer; font-size: 16px;
+            border-radius: 12px; font-weight: 700; border: none; cursor: pointer; font-size: 16px;
+            transition: transform 0.1s;
         }
-        .main-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .main-btn:active { transform: scale(0.98); }
+        .main-btn:disabled { opacity: 0.5; filter: grayscale(1); }
         
         input { 
             width: 100%; padding: 14px; background: #1a1a1a; color: #fff; 
             border: 1px solid #333; border-radius: 10px; margin-top: 5px; 
-            box-sizing: border-box; font-size: 16px; /* 16px чтобы iOS не зумил */
+            box-sizing: border-box; font-size: 16px; outline: none;
+        }
+        input:focus { border-color: var(--accent); }
+
+        /* QTY CONTROLS */
+        .qty-control {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #222; border-radius: 8px; width: 100px; padding: 5px;
+        }
+        .qty-btn {
+            width: 30px; height: 30px; border-radius: 6px; border: none;
+            background: #333; color: #fff; font-weight: bold; font-size: 18px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .qty-btn:active { background: var(--accent); color: #000; }
+        .qty-val { font-weight: bold; font-size: 15px; width: 30px; text-align: center; }
+
+        .add-btn-initial {
+            background: #222; color: var(--accent); border: 1px solid var(--accent);
+            padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer;
         }
 
-        /* --- НОВЫЙ ДИЗАЙН КАРТЫ --- */
-        #map-overlay { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; z-index: 5000; 
+        /* TOAST NOTIFICATION */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #222; color: #fff;
+            text-align: center; border-radius: 50px; padding: 12px; position: fixed;
+            z-index: 9999; left: 50%; bottom: 80px; transform: translateX(-50%);
+            font-size: 14px; border: 1px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            opacity: 0; transition: opacity 0.3s, bottom 0.3s;
         }
-        /* Поиск сверху (чтобы клавиатура не перекрывала) */
-        .map-search-panel {
-            position: absolute; top: 0; left: 0; width: 100%; 
-            padding: 15px; background: rgba(0,0,0,0.9); z-index: 5002;
-            box-sizing: border-box; border-bottom: 1px solid #333;
-        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 90px; }
+
+        /* MAP STYLES */
+        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; }
+        .map-header { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; background: rgba(0,0,0,0.9); z-index: 5002; box-sizing: border-box; }
         #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 5001; }
-        
-        /* Кнопка подтверждения снизу */
-        .map-confirm-panel {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            padding: 20px; background: linear-gradient(to top, #000 80%, transparent); 
-            z-index: 5002; box-sizing: border-box; display: flex; gap: 10px;
-        }
+        .map-footer { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px; background: linear-gradient(to top, #000 90%, transparent); z-index: 5002; display: flex; gap: 10px; box-sizing: border-box; }
 
-        /* Навигация */
+        /* NAVIGATION */
         .nav-bottom { 
             position: fixed; bottom: 0; width: 100%; display: flex; 
             background: #0a0a0a; border-top: 1px solid #222; 
             padding-bottom: env(safe-area-inset-bottom); z-index: 1000;
         }
-        .nav-item { flex: 1; padding: 15px; text-align: center; color: #555; background: none; border: none; font-size: 10px; letter-spacing: 1px; cursor: pointer; }
+        .nav-item { flex: 1; padding: 12px; text-align: center; color: #555; background: none; border: none; font-size: 10px; cursor: pointer; }
         .nav-item.active { color: var(--accent); }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+        /* ORDERS HISTORY */
+        .order-badge { 
+            background: #222; color: #888; padding: 4px 8px; border-radius: 4px; 
+            font-size: 11px; text-transform: uppercase; float: right; 
+        }
+        .order-badge.new { color: var(--accent); border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
 
     <div class="app-bar">
         <button id="back-btn" class="back-btn" onclick="goBack()">❮</button>
-        <div id="page-title" class="page-title">Armotek</div>
+        <div id="page-title" class="page-title">Каталог</div>
     </div>
 
     <div id="catalog-view" class="view active">
@@ -87,13 +113,12 @@
 
     <div id="cart-view" class="view">
         <div id="cart-list"></div>
-        
         <div id="order-form" style="display:none; margin-top:20px;">
             <div class="card">
                 <label style="color:var(--accent); font-size:12px; font-weight:bold;">АДРЕС ДОСТАВКИ</label>
                 <div onclick="openMap()" style="margin-top:10px; padding:12px; background:#1a1a1a; border:1px solid #333; border-radius:10px; display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
-                    <span id="display-addr" style="color:#aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Нажмите для выбора на карте...</span>
-                    <span style="font-size:18px;">🗺</span>
+                    <span id="display-addr" style="color:#aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">Нажмите для выбора на карте...</span>
+                    <span>🗺</span>
                 </div>
             </div>
             <button id="order-btn" class="main-btn" onclick="sendOrder()">Оформить заказ</button>
@@ -102,273 +127,325 @@
 
     <div id="profile-view" class="view">
         <div class="card">
-            <h3>Ваш профиль</h3>
+            <h3>👤 Мой профиль</h3>
             <label style="font-size:12px; color:#888;">Телефон</label>
             <input type="tel" id="u-phone" placeholder="+7..." onchange="saveLocalProfile()">
-            
-            <label style="font-size:12px; color:#888; display:block; margin-top:15px;">Город (Определяется автоматически)</label>
-            <input type="text" id="u-city" placeholder="Выберите адрес на карте..." onchange="saveLocalProfile()">
+            <label style="font-size:12px; color:#888; display:block; margin-top:10px;">Город</label>
+            <input type="text" id="u-city" placeholder="Определится по карте" readonly style="color:#888;">
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom:10px;">📦 Мои заказы</h3>
+            <div id="orders-history-list">
+                <div style="text-align:center; padding:10px; color:#555; font-size:13px;">История пуста</div>
+            </div>
         </div>
     </div>
 
     <div id="map-overlay">
-        <div class="map-search-panel">
+        <div class="map-header">
             <div style="display:flex; gap:10px;">
-                <input type="text" id="map-search-input" placeholder="Введите город, улицу..." style="margin:0;">
+                <input type="text" id="map-search-input" placeholder="Город, улица, дом..." style="margin:0;">
                 <button onclick="searchOnMap()" style="background:var(--accent); border:none; border-radius:10px; width:50px; font-weight:bold;">🔍</button>
             </div>
-            <div style="font-size:11px; color:#888; margin-top:5px;">Например: Москва, Тверская 1</div>
         </div>
-
         <div id="map"></div>
-
-        <div class="map-confirm-panel">
+        <div class="map-footer">
             <button onclick="closeMap(false)" style="flex:1; background:#222; color:#fff; border:none; padding:15px; border-radius:12px; font-weight:bold;">Отмена</button>
             <button onclick="closeMap(true)" style="flex:2; background:var(--accent); color:#000; border:none; padding:15px; border-radius:12px; font-weight:bold;">Подтвердить</button>
         </div>
     </div>
 
     <nav class="nav-bottom">
-        <button class="nav-item active" onclick="navigate('catalog-view')">КАТАЛОГ</button>
-        <button class="nav-item" onclick="navigate('cart-view')">КОРЗИНА</button>
-        <button class="nav-item" onclick="navigate('profile-view')">ПРОФИЛЬ</button>
+        <button class="nav-item active" onclick="navigate('catalog-view')">
+            <span class="nav-icon">🏠</span>Каталог
+        </button>
+        <button class="nav-item" onclick="navigate('cart-view')">
+            <span class="nav-icon">🛒</span>Корзина <span id="cart-badge" style="display:none; color:var(--accent)">•</span>
+        </button>
+        <button class="nav-item" onclick="navigate('profile-view')">
+            <span class="nav-icon">👤</span>Профиль
+        </button>
     </nav>
+
+    <div id="toast">Сообщение</div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        
-        // Состояние
-        let cart = [];
+
+        // Данные
+        const products = [
+            {id: 1, name: "Armotek Onyx (1.52m)", price: 15900, img: ""},
+            {id: 2, name: "Armotek Matte (1.52m)", price: 17200, img: ""},
+            {id: 3, name: "Ракель Carbon", price: 2500, img: ""},
+            {id: 4, name: "Нож для резки (Pro)", price: 800, img: ""}
+        ];
+
+        let cart = {}; // Object: id -> qty
         let stack = ['catalog-view'];
         let selectedAddress = "";
-        let selectedCity = "";
         let mapInstance = null;
         let mapPlacemark = null;
 
-        // Товары
-        const products = [
-            {id: 1, name: "Armotek Onyx (1.52m)", price: 15900, img: "https://via.placeholder.com/100"},
-            {id: 2, name: "Armotek Matte (1.52m)", price: 17200, img: "https://via.placeholder.com/100"},
-            {id: 3, name: "Ракель Carbon", price: 2500, img: "https://via.placeholder.com/100"}
-        ];
+        // --- ФОРМАТИРОВАНИЕ ---
+        function formatPrice(p) { return p.toLocaleString('ru-RU') + " ₽"; }
 
-        // --- ИНИЦИАЛИЗАЦИЯ ---
-        function init() {
-            renderCatalog();
-            loadLocalProfile();
+        // --- УВЕДОМЛЕНИЯ ---
+        function showToast(msg) {
+            const el = document.getElementById("toast");
+            el.innerText = msg;
+            el.className = "show";
+            setTimeout(() => { el.className = el.className.replace("show", ""); }, 2500);
         }
 
-        // --- КАТАЛОГ И КОРЗИНА ---
+        // --- КАТАЛОГ ---
         function renderCatalog() {
             const grid = document.getElementById('products-grid');
-            grid.innerHTML = products.map(p => `
+            grid.innerHTML = products.map(p => {
+                const qty = cart[p.id] || 0;
+                
+                // Рендер кнопки: либо "В корзину", либо контрол "+ 1 -"
+                let btnHtml = '';
+                if (qty === 0) {
+                    btnHtml = `<button class="add-btn-initial" onclick="updateQty(${p.id}, 1)">+ В корзину</button>`;
+                } else {
+                    btnHtml = `
+                        <div class="qty-control">
+                            <button class="qty-btn" onclick="updateQty(${p.id}, -1)">−</button>
+                            <span class="qty-val">${qty}</span>
+                            <button class="qty-btn" onclick="updateQty(${p.id}, 1)">+</button>
+                        </div>
+                    `;
+                }
+
+                return `
                 <div class="card" style="display:flex; gap:15px; align-items:center;">
-                    <div style="width:60px; height:60px; background:#222; border-radius:8px;"></div>
+                    <div style="width:60px; height:60px; background:#222; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#444; font-size:10px;">IMG</div>
                     <div style="flex:1;">
-                        <div style="font-weight:bold;">${p.name}</div>
-                        <div style="color:var(--accent);">${p.price} ₽</div>
+                        <div style="font-weight:700; font-size:15px; margin-bottom:4px;">${p.name}</div>
+                        <div style="color:var(--accent); font-weight:500;">${formatPrice(p.price)}</div>
                     </div>
-                    <button class="main-btn" style="width:auto; padding:8px 15px;" onclick="addToCart(${p.id})">+</button>
-                </div>
-            `).join('');
+                    <div>${btnHtml}</div>
+                </div>`;
+            }).join('');
         }
 
-        function addToCart(id) {
-            const p = products.find(i => i.id === id);
-            cart.push(p);
-            tg.HapticFeedback.impactOccurred('light');
-            renderCart();
-            // Анимация добавления (опционально)
-            alert("Добавлено: " + p.name); 
+        function updateQty(id, delta) {
+            if (!cart[id]) cart[id] = 0;
+            cart[id] += delta;
+            if (cart[id] <= 0) delete cart[id];
+            
+            tg.HapticFeedback.selectionChanged();
+            
+            // Если добавили первый раз - покажем тост
+            if (cart[id] === 1 && delta === 1) {
+                const p = products.find(x => x.id === id);
+                showToast(`Добавлен: ${p.name}`);
+            }
+
+            renderCatalog();
+            updateCartBadge();
         }
 
-        function renderCart() {
+        function updateCartBadge() {
+            const hasItems = Object.keys(cart).length > 0;
+            document.getElementById('cart-badge').style.display = hasItems ? 'inline' : 'none';
+        }
+
+        // --- КОРЗИНА ---
+        function renderCartView() {
             const list = document.getElementById('cart-list');
             const form = document.getElementById('order-form');
-            
-            if(cart.length === 0) {
-                list.innerHTML = "<div style='text-align:center; padding:50px; color:#555;'>Корзина пуста</div>";
+            const ids = Object.keys(cart);
+
+            if (ids.length === 0) {
+                list.innerHTML = "<div style='text-align:center; padding:60px; color:#555;'>Корзина пуста</div>";
                 form.style.display = 'none';
-            } else {
-                let total = cart.reduce((sum, i) => sum + i.price, 0);
-                list.innerHTML = cart.map(i => `
-                    <div style="padding:10px; border-bottom:1px solid #222; display:flex; justify-content:space-between;">
-                        <span>${i.name}</span>
-                        <span>${i.price} ₽</span>
-                    </div>
-                `).join('') + `<div style="text-align:right; padding:15px; font-weight:bold; color:var(--accent)">ИТОГО: ${total} ₽</div>`;
-                form.style.display = 'block';
+                return;
             }
+
+            let total = 0;
+            let html = ids.map(id => {
+                const p = products.find(x => x.id == id);
+                const q = cart[id];
+                const sum = p.price * q;
+                total += sum;
+                return `
+                <div style="border-bottom:1px solid #222; padding:12px 0; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:14px;">${p.name}</div>
+                        <div style="color:#666; font-size:12px;">${q} x ${formatPrice(p.price)}</div>
+                    </div>
+                    <div style="font-weight:bold; color:#fff;">${formatPrice(sum)}</div>
+                    <button onclick="updateQty(${id}, -${q}); renderCartView()" style="background:none; border:none; color:#555; padding:0 0 0 15px; font-size:18px;">✕</button>
+                </div>`;
+            }).join('');
+
+            html += `<div style="text-align:right; padding-top:20px; font-size:18px; font-weight:bold;">
+                        <span style="color:#888; font-size:14px; margin-right:10px;">ИТОГО:</span> 
+                        <span style="color:var(--accent)">${formatPrice(total)}</span>
+                     </div>`;
+
+            list.innerHTML = html;
+            form.style.display = 'block';
         }
 
-        // --- НАВИГАЦИЯ ---
-        function navigate(viewId) {
-            if (stack[stack.length - 1] === viewId) return;
-            stack.push(viewId);
-            updateView();
-        }
-
-        function goBack() {
-            if (stack.length > 1) { stack.pop(); updateView(); }
-        }
-
-        function updateView() {
-            const current = stack[stack.length - 1];
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(current).classList.add('active');
-            
-            document.getElementById('back-btn').classList.toggle('visible', stack.length > 1);
-            document.getElementById('page-title').innerText = 
-                current === 'catalog-view' ? 'Armotek Store' : 
-                current === 'cart-view' ? 'Оформление' : 'Профиль';
-
-            document.querySelectorAll('.nav-item').forEach(btn => {
-                const target = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
-                btn.classList.toggle('active', target === current);
-            });
-        }
-
-        // --- ЛОГИКА КАРТЫ (FIXED) ---
+        // --- КАРТА (ИСПРАВЛЕННАЯ ЛОГИКА) ---
         function openMap() {
             document.getElementById('map-overlay').style.display = 'block';
-            
-            // Инициализируем карту только один раз при первом открытии
             if (!mapInstance) {
-                ymaps.ready(initMapEngine);
-            } else {
-                // Если карта уже есть, ресайзим её (важно для корректного отображения после display:none)
-                mapInstance.container.fitToViewport();
+                ymaps.ready(() => {
+                    mapInstance = new ymaps.Map("map", {
+                        center: [55.75, 37.62], zoom: 11,
+                        controls: ['zoomControl', 'geolocationControl']
+                    });
+                    mapInstance.events.add('click', e => setMarker(e.get('coords')));
+                });
             }
         }
 
-        function initMapEngine() {
-            mapInstance = new ymaps.Map("map", {
-                center: [55.751574, 37.573856],
-                zoom: 11,
-                controls: ['zoomControl', 'geolocationControl'] // Добавили кнопку "Где я"
-            });
-
-            // Клик по карте
-            mapInstance.events.add('click', function (e) {
-                const coords = e.get('coords');
-                setMapMarker(coords);
-            });
+        function setMarker(coords) {
+            if (mapPlacemark) mapInstance.geoObjects.remove(mapPlacemark);
+            mapPlacemark = new ymaps.Placemark(coords, {}, { draggable: true, preset: 'islands#yellowIcon' });
             
-            // Слушаем кнопку "Где я" через событие
-            // Яндекс сам обрабатывает геолокацию через контрол, 
-            // но мы можем повесить листенер на изменение центра карты или геолокацию
-        }
-
-        // Установка маркера и поиск адреса
-        function setMapMarker(coords) {
-            // Удаляем старый маркер
-            if (mapPlacemark) {
-                mapInstance.geoObjects.remove(mapPlacemark);
-            }
-            
-            // Ставим новый
-            mapPlacemark = new ymaps.Placemark(coords, {}, {
-                preset: 'islands#yellowIcon',
-                draggable: true // Можно двигать!
-            });
-            
-            // Если перетащили маркер
-            mapPlacemark.events.add('dragend', function () {
-                getAddress(mapPlacemark.geometry.getCoordinates());
-            });
-
+            mapPlacemark.events.add('dragend', () => getAddr(mapPlacemark.geometry.getCoordinates()));
             mapInstance.geoObjects.add(mapPlacemark);
-            getAddress(coords);
+            getAddr(coords);
         }
 
-        // Обратное геокодирование (Координаты -> Адрес + Город)
-        function getAddress(coords) {
-            document.getElementById('map-search-input').value = "Определяем адрес...";
-            
-            ymaps.geocode(coords).then(function (res) {
-                const firstGeoObject = res.geoObjects.get(0);
+        function getAddr(coords) {
+            document.getElementById('map-search-input').value = "Поиск...";
+            ymaps.geocode(coords).then(res => {
+                const obj = res.geoObjects.get(0);
+                const addr = obj.getAddressLine();
+                document.getElementById('map-search-input').value = addr;
                 
-                // Полный адрес
-                const address = firstGeoObject.getAddressLine();
-                
-                // Попытка вытащить город (Locality)
-                const localities = firstGeoObject.getLocalities(); 
-                const city = localities.length > 0 ? localities[0] : "Не определен";
-
-                // Обновляем переменные
-                selectedAddress = address;
-                selectedCity = city;
-
-                // Обновляем UI в поиске
-                document.getElementById('map-search-input').value = address;
+                // Извлекаем город для профиля
+                const locs = obj.getLocalities();
+                if(locs.length > 0) localStorage.setItem('user_city', locs[0]);
             });
         }
 
-        // Поиск по текстовому полю (Кнопка Лупа)
         function searchOnMap() {
-            const query = document.getElementById('map-search-input').value;
-            if (!query) return;
-
-            ymaps.geocode(query).then(function (res) {
-                const firstGeoObject = res.geoObjects.get(0);
-                if (!firstGeoObject) {
-                    alert("Адрес не найден");
-                    return;
+            const txt = document.getElementById('map-search-input').value;
+            if(!txt) return;
+            ymaps.geocode(txt).then(res => {
+                const obj = res.geoObjects.get(0);
+                if(obj) {
+                    const coords = obj.geometry.getCoordinates();
+                    mapInstance.setCenter(coords, 15);
+                    setMarker(coords);
                 }
-                const coords = firstGeoObject.geometry.getCoordinates();
-                
-                mapInstance.setCenter(coords, 15);
-                setMapMarker(coords);
             });
         }
 
         function closeMap(save) {
             document.getElementById('map-overlay').style.display = 'none';
-            if (save && selectedAddress) {
-                // Сохраняем адрес для заказа
-                document.getElementById('display-addr').innerText = selectedAddress;
-                document.getElementById('display-addr').style.color = "#fff";
+            if (save) {
+                // ВАЖНО: Берем то, что написано в INPUT, а не то, что дала карта
+                // Это позволяет клиенту дописать "подъезд 5" руками
+                const manualInput = document.getElementById('map-search-input').value;
+                selectedAddress = manualInput;
                 
-                // АВТОМАТИЧЕСКИ ПОДТЯГИВАЕМ ГОРОД В ПРОФИЛЬ
-                document.getElementById('u-city').value = selectedCity;
-                saveLocalProfile(); // Сохраняем изменения
-                
-                alert(`Адрес выбран!\nГород (${selectedCity}) сохранен в профиль.`);
+                const displayEl = document.getElementById('display-addr');
+                displayEl.innerText = selectedAddress;
+                displayEl.style.color = "#fff";
+
+                // Обновляем город в профиле, если он был найден
+                const city = localStorage.getItem('user_city');
+                if(city) document.getElementById('u-city').value = city;
             }
         }
 
-        // --- ЗАКАЗ И ПРОФИЛЬ ---
-        function sendOrder() {
-            if (!selectedAddress) {
-                alert("Пожалуйста, выберите адрес доставки!");
+        // --- ИСТОРИЯ ЗАКАЗОВ (ЛОКАЛЬНАЯ) ---
+        function loadOrders() {
+            const hist = JSON.parse(localStorage.getItem('orders_hist') || '[]');
+            const container = document.getElementById('orders-history-list');
+            if (hist.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:10px; color:#555; font-size:13px;">История пуста</div>';
                 return;
             }
+            container.innerHTML = hist.map(o => `
+                <div style="border-bottom:1px solid #222; padding:10px 0;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="font-weight:bold; font-size:13px;">Заказ #${o.id.substr(-4)}</span>
+                        <span class="order-badge new">${o.status}</span>
+                    </div>
+                    <div style="font-size:11px; color:#888;">${o.date} • ${formatPrice(o.total)}</div>
+                    <div style="font-size:11px; color:#666; margin-top:3px;">${o.addr}</div>
+                </div>
+            `).join('');
+        }
+
+        function saveOrderLocal(total) {
+            const hist = JSON.parse(localStorage.getItem('orders_hist') || '[]');
+            hist.unshift({
+                id: Date.now().toString(),
+                date: new Date().toLocaleDateString(),
+                total: total,
+                addr: selectedAddress,
+                status: 'В обработке'
+            });
+            localStorage.setItem('orders_hist', JSON.stringify(hist));
+        }
+
+        // --- ОТПРАВКА ---
+        function sendOrder() {
+            if (!selectedAddress) return alert("Выберите адрес!");
             
-            const total = cart.reduce((sum, i) => sum + i.price, 0);
-            const data = {
-                cart: cart,
+            // Превращаем cart object в array для бота
+            const cartArr = Object.keys(cart).map(id => {
+                const p = products.find(x => x.id == id);
+                return { ...p, qty: cart[id] };
+            });
+
+            const total = cartArr.reduce((sum, x) => sum + (x.price * x.qty), 0);
+
+            saveOrderLocal(total);
+
+            tg.sendData(JSON.stringify({
+                cart: cartArr,
                 total: total,
                 address: selectedAddress,
-                city: document.getElementById('u-city').value,
                 phone: document.getElementById('u-phone').value
-            };
-            
-            tg.sendData(JSON.stringify(data));
+            }));
         }
 
-        function saveLocalProfile() {
-            // В реальности тут можно отправлять на сервер
-            // Пока просто сохраним в переменные, которые уйдут с заказом
-            console.log("Профиль обновлен");
+        // --- НАВИГАЦИЯ ---
+        function navigate(id) {
+            if (id === 'cart-view') renderCartView();
+            if (id === 'profile-view') loadOrders();
+            
+            stack.push(id);
+            updateView();
         }
         
-        function loadLocalProfile() {
-            // Если бы мы хранили в localStorage, мы бы подгрузили это тут
+        function goBack() {
+            if (stack.length > 1) { stack.pop(); updateView(); }
         }
 
-        // Запуск
-        init();
+        function updateView() {
+            const cur = stack[stack.length - 1];
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(cur).classList.add('active');
+            
+            document.getElementById('back-btn').classList.toggle('visible', stack.length > 1);
+            
+            const titles = {'catalog-view':'Каталог', 'cart-view':'Оформление', 'profile-view':'Профиль'};
+            document.getElementById('page-title').innerText = titles[cur];
+
+            document.querySelectorAll('.nav-item').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('onclick').includes(cur));
+            });
+        }
+
+        // Инициализация
+        document.getElementById('products-grid').innerHTML = "Loading...";
+        setTimeout(renderCatalog, 100); // Небольшая задержка для плавности
+        
+        // Подгрузка профиля
+        if(localStorage.getItem('user_city')) document.getElementById('u-city').value = localStorage.getItem('user_city');
 
     </script>
 </body>
