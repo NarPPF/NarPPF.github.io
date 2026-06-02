@@ -1355,6 +1355,18 @@
         </div>
         <button class="btn-primary" onclick="openBotChat()">Написать в боте</button>
     </div>
+
+    <!-- Админ панель (только для админов) -->
+    <div id="admin-section" class="pf-contact" style="margin-bottom:24px; display:none; border:1px solid var(--accent-dim); background:rgba(212,175,55,0.05)">
+        <div class="pf-contact-row">
+            <div class="pf-contact-icon">⚙️</div>
+            <div>
+                <h4>Админ-панель</h4>
+                <p>Управление товарами, заказами и настройками</p>
+            </div>
+        </div>
+        <button class="btn-primary" style="background:var(--accent); color:#000" onclick="openAdminPanel()">Открыть админку</button>
+    </div>
 </div>
 
 <!-- ───────── КАЛЬКУЛЯТОР РАСХОДА ───────── -->
@@ -1395,6 +1407,67 @@
         <div id="calc-result"></div>
     </div>
     <div style="height: 100px"></div>
+</div>
+
+<!-- ───────── АДМИН ПАНЕЛЬ ───────── -->
+<div id="admin-view" class="view" style="display:none">
+    <div class="secondary-header">
+        <button class="back-btn" onclick="switchTab('profile-view', null, 2)">‹ Назад</button>
+        <h1>⚙️ Админ-панель</h1>
+    </div>
+    <div style="padding:16px">
+        <!-- Статистика -->
+        <div class="ap-block" style="margin-bottom:16px">
+            <h3>📊 Статистика за 7 дней</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px">
+                <div style="background:var(--card); padding:12px; border-radius:12px">
+                    <div style="font-size:11px; color:var(--text-muted)">Заказов</div>
+                    <div style="font-size:20px; font-weight:700" id="admin-week-orders">0</div>
+                </div>
+                <div style="background:var(--card); padding:12px; border-radius:12px">
+                    <div style="font-size:11px; color:var(--text-muted)">Выручка</div>
+                    <div style="font-size:20px; font-weight:700; color:var(--accent)" id="admin-week-revenue">0</div>
+                </div>
+                <div style="background:var(--card); padding:12px; border-radius:12px">
+                    <div style="font-size:11px; color:var(--text-muted)">Пользователей</div>
+                    <div style="font-size:20px; font-weight:700" id="admin-week-users">0</div>
+                </div>
+                <div style="background:var(--card); padding:12px; border-radius:12px">
+                    <div style="font-size:11px; color:var(--text-muted)">Средний чек</div>
+                    <div style="font-size:20px; font-weight:700" id="admin-week-avg">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление -->
+        <div class="ap-block" style="margin-bottom:16px">
+            <h3>📦 Управление</h3>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px">
+                <button class="btn-primary" onclick="adminShowProducts()">Товары</button>
+                <button class="btn-secondary" onclick="adminShowOrders()">Заказы</button>
+                <button class="btn-secondary" onclick="adminShowPromo()">Промокоды</button>
+                <button class="btn-secondary" onclick="adminShowPaymentSettings()">Настройки оплаты</button>
+            </div>
+        </div>
+
+        <!-- Товары -->
+        <div id="admin-products-section" style="display:none; margin-top:16px">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+                <h3>📦 Товары</h3>
+                <button class="btn-secondary" style="padding:8px 12px; font-size:13px" onclick="adminAddProduct()">+ Добавить</button>
+            </div>
+            <div id="admin-products-list" style="display:flex; flex-direction:column; gap:8px"></div>
+        </div>
+
+        <!-- QR Код -->
+        <div class="ap-block" style="margin-top:16px">
+            <h3>💳 QR-код для оплаты</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px">Загрузи QR-код своего счёта для приёма платежей</p>
+            <input type="file" id="qr-upload" accept="image/*" style="margin-bottom:12px">
+            <button class="btn-primary" onclick="adminUploadQR()">Загрузить QR</button>
+            <div id="admin-qr-preview" style="margin-top:12px"></div>
+        </div>
+    </div>
 </div>
 
 <!-- ───────── О ПРОЕКТЕ ───────── -->
@@ -1452,7 +1525,7 @@
 // ============================================================
 // Cloudflare туннель (бесплатно, без регистрации)
 const API_BASE = window.location.origin.includes('github.io')
-    ? 'https://freedom-reserved-trial.trycloudflare.com'
+    ? 'https://referred-stockings-flood-vancouver.trycloudflare.com'
     : window.location.origin;
 
 const tg = window.Telegram.WebApp;
@@ -2541,6 +2614,12 @@ function renderProfile(p) {
     document.getElementById('pf-username').innerText = p.username ? '@' + p.username : '';
     document.getElementById('pf-balance').innerText = Math.round(p.bonus_balance || 0);
 
+    // Показать админ-секцию только админам
+    const adminSection = document.getElementById('admin-section');
+    if (adminSection) {
+        adminSection.style.display = (p.is_admin ? 'block' : 'none');
+    }
+
     const ref = p.referral;
     if (ref) {
         document.getElementById('ref-link').innerText = ref.ref_link;
@@ -2619,6 +2698,196 @@ function goToOrders() {
         if (!sec.classList.contains('open')) sec.classList.add('open');
         loadOrderHistory();
     }, 100);
+}
+
+// ============================================================
+// АДМИН ПАНЕЛЬ
+// ============================================================
+async function openAdminPanel() {
+    if (!me || !me.is_admin) {
+        toast('Требуются права администратора', true);
+        return;
+    }
+    document.getElementById('admin-view').style.display = 'block';
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    await loadAdminStats();
+}
+
+async function loadAdminStats() {
+    try {
+        const stats = await api('/api/admin/stats/dashboard');
+        document.getElementById('admin-week-orders').innerText = stats.week.paid_orders || 0;
+        document.getElementById('admin-week-revenue').innerText = fmt(stats.week.revenue || 0);
+        document.getElementById('admin-week-users').innerText = stats.week.new_users || 0;
+        document.getElementById('admin-week-avg').innerText = fmt(stats.week.avg_check || 0);
+    } catch (e) {
+        toast('Ошибка загрузки статистики: ' + e.message, true);
+    }
+}
+
+async function adminShowProducts() {
+    const section = document.getElementById('admin-products-section');
+    section.style.display = 'block';
+    try {
+        const products = await api('/api/admin/products');
+        const list = document.getElementById('admin-products-list');
+        list.innerHTML = products.map(p => `
+            <div style="background:var(--card); padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center">
+                <div style="flex:1">
+                    <div style="font-weight:700">${escapeHtml(p.name)}</div>
+                    <div style="font-size:11px; color:var(--text-muted)">Арт: ${escapeHtml(p.sku || '—')} | ${p.stock_available} шт.</div>
+                </div>
+                <div style="display:flex; gap:8px">
+                    <button class="btn-secondary" style="padding:6px 10px; font-size:12px" onclick="adminEditProduct(${p.id})">✏️</button>
+                    <button class="btn-secondary" style="padding:6px 10px; font-size:12px; color:var(--danger)" onclick="adminDeleteProduct(${p.id})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+    }
+}
+
+async function adminAddProduct() {
+    const name = prompt('Название товара:');
+    if (!name) return;
+    const sku = prompt('Артикул (необязательно):') || '';
+    const price = parseFloat(prompt('Цена (розница):', '0')) || 0;
+    try {
+        const product = await api('/api/admin/products', {
+            method: 'POST',
+            body: JSON.stringify({ name, sku, base_unit: 'м.п.', stock_qty: 0, is_active: true }),
+        });
+        toast('Товар создан');
+        await adminShowProducts();
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+    }
+}
+
+async function adminEditProduct(productId) {
+    toast('Редактирование товара ID:' + productId);
+    // TODO: Full edit modal
+}
+
+async function adminDeleteProduct(productId) {
+    if (!confirm('Деактивировать товар?')) return;
+    try {
+        await api('/api/admin/products/' + productId, { method: 'DELETE' });
+        toast('Товар деактивирован');
+        await adminShowProducts();
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+    }
+}
+
+async function adminShowOrders() {
+    try {
+        const orders = await api('/api/admin/orders?limit=20');
+        let html = '<div style="margin-top:16px"><h3>📋 Последние заказы</h3>';
+        orders.forEach(o => {
+            html += `
+                <div style="background:var(--card); padding:12px; border-radius:12px; margin-bottom:8px">
+                    <div style="display:flex; justify-content:space-between">
+                        <div style="font-weight:700">${escapeHtml(o.order_uid)}</div>
+                        <div class="order-badge ob-${o.status}">${statusLabel(o.status)}</div>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:6px">
+                        ${escapeHtml(o.full_name || o.username || '—')} · ${fmt(o.total_amount)}
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        document.getElementById('admin-products-section').insertAdjacentHTML('afterend', html);
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+    }
+}
+
+async function adminShowPromo() {
+    try {
+        const promos = await api('/api/admin/promo-codes');
+        let html = '<div style="margin-top:16px"><h3>🎫 Промокоды</h3>';
+        promos.forEach(p => {
+            html += `
+                <div style="background:var(--card); padding:12px; border-radius:12px; margin-bottom:8px">
+                    <div style="display:flex; justify-content:space-between">
+                        <div style="font-weight:700; color:var(--accent)">${escapeHtml(p.code)}</div>
+                        <div style="font-size:12px">${p.type === 'percent' ? p.value + '%' : fmt(p.value)}</div>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px">
+                        Использован: ${p.used_count} ${p.usage_limit ? '/' : ''} ${p.usage_limit || '∞'}
+                    </div>
+                </div>
+            `;
+        });
+        html += '<button class="btn-secondary" style="margin-top:12px" onclick="adminAddPromo()">+ Создать промокод</button></div>';
+        document.getElementById('admin-products-section').insertAdjacentHTML('afterend', html);
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+    }
+}
+
+async function adminAddPromo() {
+    const code = prompt('Код промокода:');
+    if (!code) return;
+    const type = confirm('OK для процентов, Отмена для фиксированной суммы') ? 'percent' : 'fixed';
+    const value = parseFloat(prompt('Значение:', type === 'percent' ? '10' : '500')) || 0;
+    try {
+        await api('/api/admin/promo-codes', {
+            method: 'POST',
+            body: JSON.stringify({ code, type, value, is_active: true }),
+        });
+        toast('Промокод создан');
+        await adminShowPromo();
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+    }
+}
+
+async function adminShowPaymentSettings() {
+    try {
+        const ps = await api('/api/admin/payment-settings');
+        let html = '<div style="margin-top:16px"><h3>💳 Настройки оплаты</h3>';
+        if (ps.qr_image_url) {
+            html += `<img src="${escapeAttr(ps.qr_image_url)}" class="qr-img">`;
+        } else {
+            html += '<p style="color:var(--text-muted)">QR-код не загружен</p>';
+        }
+        if (ps.company_requisites) {
+            html += `<div class="requisites">${escapeHtml(JSON.stringify(ps.company_requisites, null, 2))}</div>`;
+        }
+        html += '</div>';
+        document.getElementById('admin-products-section').insertAdjacentHTML('afterend', html);
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+    }
+}
+
+async function adminUploadQR() {
+    const fileInput = document.getElementById('qr-upload');
+    const file = fileInput.files[0];
+    if (!file) {
+        toast('Выберите файл', true);
+        return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+        const res = await fetch(API_BASE + '/api/admin/upload/qr', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + authToken },
+            body: formData,
+        });
+        if (!res.ok) throw new Error('Ошибка загрузки');
+        const result = await res.json();
+        toast('QR-код загружен');
+        document.getElementById('admin-qr-preview').innerHTML = `<img src="${escapeAttr(result.url)}" class="qr-img">`;
+        await adminShowPaymentSettings();
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+    }
 }
 
 init();
