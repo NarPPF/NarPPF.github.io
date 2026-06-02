@@ -1450,11 +1450,9 @@
 // ============================================================
 // КОНФИГ
 // ============================================================
-// Для локальных тестов с ngrok — замени на свой HTTPS URL
-// Пример: 'https://xxxx-xxxx.ngrok-free.app'
-// Для production — укажи домен backend
+// Cloudflare туннель (бесплатно, без регистрации)
 const API_BASE = window.location.origin.includes('github.io')
-    ? 'https://ВАШ-BACKEND-ДОМЕН.ru'  // ← ЗАМЕНИТЬ НА РЕАЛЬНЫЙ BACKEND URL
+    ? 'https://freedom-reserved-trial.trycloudflare.com'
     : window.location.origin;
 
 const tg = window.Telegram.WebApp;
