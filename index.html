@@ -998,3 +998,1632 @@
         .form-group select:focus,
         .form-group textarea:focus { border-color: var(--accent); }
         .form-group select option { background: var(--card); }
+
+        .step-title {
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
+
+        /* ───── УСПЕХ ───── */
+        .success-view {
+            text-align: center;
+            padding: 60px 24px;
+        }
+        .success-icon {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 20px;
+            background: var(--accent-soft);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 44px;
+        }
+        .success-view h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+        .success-view p { color: var(--text-muted); font-size: 13px; }
+
+        /* ───── МОДАЛ ВЫБОРА ГОРОДА ───── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 16px;
+            display: none;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 28px 20px;
+            width: 100%;
+            max-width: 360px;
+        }
+        .modal-box h2 {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        .modal-box p {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 22px;
+        }
+        .city-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .city-btn {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.15s;
+        }
+        .city-btn:hover, .city-btn:active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        /* ───── TOAST ───── */
+        .toast {
+            position: fixed;
+            bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            color: var(--accent);
+            border: 1px solid var(--accent-dim);
+            padding: 12px 20px;
+            border-radius: 14px;
+            font-size: 13px;
+            z-index: 300;
+            animation: toastIn 0.25s;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.err { color: var(--danger); border-color: rgba(231,76,60,0.4); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* ───── СПИННЕР ───── */
+        .spinner {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border: 2.5px solid var(--card-soft);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .empty-text {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-muted);
+        }
+        .empty-text h3 { color: var(--text); margin-bottom: 6px; }
+
+        /* ───── QR / РЕКВИЗИТЫ ───── */
+        .qr-img {
+            max-width: 200px;
+            display: block;
+            margin: 16px auto;
+            border-radius: 12px;
+            background: white;
+            padding: 8px;
+        }
+        .requisites {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 12px;
+            font-size: 12px;
+            font-family: monospace;
+            line-height: 1.6;
+            color: var(--text-muted);
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ───────── МОДАЛ ВЫБОРА ГОРОДА ───────── -->
+<div class="modal-overlay" id="city-modal">
+    <div class="modal-box">
+        <h2>выберите город</h2>
+        <p>доставка работает в нескольких городах</p>
+        <div class="city-list">
+            <button class="city-btn" onclick="selectCity('Москва')">МОСКВА</button>
+            <button class="city-btn" onclick="selectCity('Санкт-Петербург')">САНКТ-ПЕТЕРБУРГ</button>
+            <button class="city-btn" onclick="selectCity('Екатеринбург')">ЕКАТЕРИНБУРГ</button>
+            <button class="city-btn" onclick="selectCity('Казань')">КАЗАНЬ</button>
+            <button class="city-btn" onclick="selectCity('Краснодар')">КРАСНОДАР</button>
+            <button class="city-btn" onclick="selectCity('Новосибирск')">НОВОСИБИРСК</button>
+            <button class="city-btn" onclick="selectCity('Другой')">ДРУГОЙ</button>
+        </div>
+    </div>
+</div>
+
+<!-- ───────── КАТАЛОГ ───────── -->
+<div id="catalog-view" class="view active">
+    <div class="header">
+        <div class="header-brand">ARMOTEK<span class="dot">.</span></div>
+        <div class="header-row">
+            <input type="text" id="search-input" class="search-box" placeholder="Поиск плёнки или артикула" oninput="onSearchChange()">
+            <div class="city-pill" onclick="openCityModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span id="city-label">Москва</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="promo-banner" id="promo-banner" style="display:none">
+        <div>
+            <span class="promo-pill">КАЛЬКУЛЯТОР</span>
+            <div class="promo-text">прикинь <span class="accent">расход плёнки</span> на авто</div>
+        </div>
+        <button class="promo-arrow" onclick="openCalculator()">→</button>
+    </div>
+
+    <div class="filters" id="filters">
+        <button class="filter-pill active" onclick="filterCategory('all', this)">Все</button>
+    </div>
+
+    <div class="grid" id="product-grid">
+        <div class="loading" style="grid-column: 1 / -1"><span class="spinner"></span></div>
+    </div>
+</div>
+
+<!-- ───────── КАРТОЧКА ТОВАРА ───────── -->
+<div id="product-view" class="view">
+    <div class="pd-img-wrap">
+        <button class="pd-back" onclick="closeProductView()">‹</button>
+        <img id="pd-img" alt="" />
+        <div class="pd-dots" id="pd-dots"></div>
+    </div>
+    <div class="pd-body" id="pd-body"></div>
+    <div class="pd-cta" id="pd-cta-wrap"></div>
+</div>
+
+<!-- ───────── КОРЗИНА ───────── -->
+<div id="cart-view" class="view">
+    <div class="secondary-header">
+        <h1>Корзина</h1>
+    </div>
+    <div id="cart-content"></div>
+</div>
+
+<!-- ───────── ОФОРМЛЕНИЕ ───────── -->
+<div id="checkout-view" class="view">
+    <div class="secondary-header">
+        <button class="back-btn" onclick="switchTab('cart-view', null, 1)">‹ Назад</button>
+        <h1>Оформление</h1>
+    </div>
+    <div class="checkout-step" id="co-step-1">
+        <div class="step-title">1. Контакты</div>
+        <div class="form-group"><label>Имя*</label><input id="co-name" placeholder="Иван Иванов"></div>
+        <div class="form-group"><label>Телефон*</label><input id="co-phone" type="tel" placeholder="+7 999 000 00 00"></div>
+        <div class="form-group"><label>Студия / Компания</label><input id="co-studio" placeholder="Название студии"></div>
+        <button class="btn-primary" onclick="nextStep(2)">Далее</button>
+    </div>
+    <div class="checkout-step" id="co-step-2" style="display:none">
+        <div class="step-title">2. Доставка</div>
+        <div class="form-group"><label>Город</label><select id="co-city"></select></div>
+        <div class="form-group"><label>Адрес*</label><input id="co-address" placeholder="ул. Ленина, д. 1, оф. 101"></div>
+        <div class="form-group">
+            <label>Способ</label>
+            <select id="co-method">
+                <option value="courier">Курьер</option>
+                <option value="pickup">Самовывоз</option>
+                <option value="transport">Транспортная компания</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Дата</label><select id="co-date"></select></div>
+        <div class="form-group"><label>Время</label><select id="co-time"></select></div>
+        <div class="form-group"><label>Комментарий</label><textarea id="co-comment" rows="2" placeholder="Код домофона, пропуск..."></textarea></div>
+        <button class="btn-primary" onclick="nextStep(3)">Далее</button>
+    </div>
+    <div class="checkout-step" id="co-step-3" style="display:none">
+        <div class="step-title">3. Оплата</div>
+        <div class="form-group">
+            <label>Способ оплаты</label>
+            <select id="co-payment" onchange="onPaymentChange()">
+                <option value="qr">QR-код (быстро)</option>
+                <option value="invoice">Счёт-фактура (юр.лица)</option>
+            </select>
+        </div>
+        <div id="invoice-form" style="display:none">
+            <div class="step-title" style="font-size:15px">Реквизиты</div>
+            <div class="form-group"><label>Компания*</label><input id="inv-company"></div>
+            <div class="form-group"><label>ИНН*</label><input id="inv-inn"></div>
+            <div class="form-group"><label>КПП</label><input id="inv-kpp"></div>
+            <div class="form-group"><label>Банк*</label><input id="inv-bank"></div>
+            <div class="form-group"><label>БИК*</label><input id="inv-bik"></div>
+            <div class="form-group"><label>Счёт*</label><input id="inv-account"></div>
+            <div class="form-group"><label>Email*</label><input id="inv-email" type="email"></div>
+        </div>
+        <div id="co-totals" style="margin-top:18px"></div>
+        <button class="btn-primary" onclick="submitOrder()" id="co-submit-btn" style="margin-top:18px">Оформить заказ</button>
+    </div>
+</div>
+
+<!-- ───────── УСПЕХ ───────── -->
+<div id="success-view" class="view">
+    <div class="success-view">
+        <div class="success-icon">✓</div>
+        <h2>Заказ оформлен</h2>
+        <p>№ <b id="success-uid" style="color:var(--accent)"></b></p>
+        <div id="payment-info" style="margin-top:24px"></div>
+        <button class="btn-primary" style="margin-top:16px" onclick="goToOrders()">К моим заказам</button>
+        <button class="btn-secondary" style="margin-top:10px" onclick="switchTab('catalog-view', null, 0)">В каталог</button>
+    </div>
+</div>
+
+<!-- ───────── ПРОФИЛЬ ───────── -->
+<div id="profile-view" class="view">
+    <div class="secondary-header"><h1>Профиль</h1></div>
+
+    <div class="pf-card">
+        <div class="pf-avatar" id="pf-avatar">A</div>
+        <div class="pf-info">
+            <div class="pf-name" id="pf-name">Гость</div>
+            <div class="pf-username" id="pf-username"></div>
+            <div class="pf-balance">★ <span id="pf-balance">0</span> баллов</div>
+        </div>
+    </div>
+
+    <!-- Активные заказы -->
+    <div class="pf-section open" id="pf-active-section">
+        <div class="pf-section-head" onclick="toggleSection('pf-active-section')">
+            <h3>Активные заказы</h3>
+            <span class="chev">▼</span>
+        </div>
+        <div class="pf-section-body" id="pf-active-orders">
+            <div class="pf-empty">Сейчас активных заказов нет</div>
+        </div>
+    </div>
+
+    <!-- История заказов -->
+    <div class="pf-section" id="pf-history-section">
+        <div class="pf-section-head" onclick="toggleSection('pf-history-section'); loadOrderHistory()">
+            <h3>История заказов</h3>
+            <span class="chev">▼</span>
+        </div>
+        <div class="pf-section-body" id="pf-history-orders">
+            <div class="loading"><span class="spinner"></span></div>
+        </div>
+    </div>
+
+    <!-- Реферальная программа -->
+    <div class="pf-ref">
+        <h3>👥 Приведи коллегу</h3>
+        <p id="ref-text">Получите баллы за каждого приглашённого. Приглашённый также получит приветственные баллы.</p>
+        <div class="pf-ref-link" onclick="copyRefLink()" id="ref-link">—</div>
+        <button class="btn-primary" onclick="shareRefLink()">Поделиться</button>
+        <div class="pf-ref-stats">
+            <div class="pf-ref-stat"><div class="v" id="ref-invited">0</div><div class="l">пригласил</div></div>
+            <div class="pf-ref-stat"><div class="v" id="ref-paid">0</div><div class="l">оплатили</div></div>
+            <div class="pf-ref-stat"><div class="v" id="ref-earned">0</div><div class="l">баллов</div></div>
+        </div>
+    </div>
+
+    <!-- Контактные данные -->
+    <div class="pf-contact">
+        <h4 style="margin-bottom:12px">Мои контакты</h4>
+        <div class="pf-form-row"><label>Имя</label><input id="cust-name"></div>
+        <div class="pf-form-row"><label>Телефон</label><input id="cust-phone" type="tel"></div>
+        <div class="pf-form-row"><label>Email</label><input id="cust-email" type="email"></div>
+        <button class="btn-secondary" onclick="saveContacts()">Сохранить</button>
+    </div>
+
+    <!-- Связаться с нами -->
+    <div class="pf-contact" style="margin-bottom:24px">
+        <div class="pf-contact-row">
+            <div class="pf-contact-icon">💬</div>
+            <div>
+                <h4>Связаться с нами</h4>
+                <p>Напишите нам прямо в боте — мы отвечаем ежедневно с 9:00 до 19:00.</p>
+            </div>
+        </div>
+        <button class="btn-primary" onclick="openBotChat()">Написать в боте</button>
+    </div>
+</div>
+
+<!-- ───────── КАЛЬКУЛЯТОР РАСХОДА ───────── -->
+<div id="calc-view" class="view">
+    <div class="secondary-header">
+        <button class="back-btn" onclick="switchTab('catalog-view', null, 0)">‹ Назад</button>
+        <h1>Калькулятор</h1>
+    </div>
+    <div style="padding: 16px">
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.5; margin-bottom:18px">
+            Прикинь сколько плёнки нужно на оклейку. Это оценка для планирования закупки — точный метраж зависит от модели и метода раскроя.
+        </p>
+
+        <div class="form-group">
+            <label>Размер авто</label>
+            <select id="calc-size">
+                <option value="small">Малый (хэтчбек, седан B)</option>
+                <option value="medium" selected>Средний (седан C/D, кроссовер)</option>
+                <option value="large">Большой (SUV, минивэн, премиум)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Ширина рулона, м</label>
+            <select id="calc-width">
+                <option value="1.52">1.52 м (стандарт)</option>
+                <option value="1.07">1.07 м</option>
+                <option value="0.5">0.5 м (антигравий)</option>
+            </select>
+        </div>
+
+        <div style="font-size:14px; font-weight:700; margin:18px 0 10px">Готовые комплекты</div>
+        <div id="calc-presets" style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px"></div>
+
+        <div style="font-size:14px; font-weight:700; margin:18px 0 10px">Или выбери зоны</div>
+        <div id="calc-zones" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px"></div>
+
+        <div id="calc-result"></div>
+    </div>
+    <div style="height: 100px"></div>
+</div>
+
+<!-- ───────── О ПРОЕКТЕ ───────── -->
+<div id="about-view" class="view">
+    <div class="secondary-header"><h1>О проекте</h1></div>
+    <div style="padding: 16px 0">
+        <div class="ap-block">
+            <h3>Armotek Films</h3>
+            <p>Прямые поставки полиуретановых плёнок NAR и Crystal для детейлинг-студий. Работаем с проверенными производителями, гарантируем качество и быструю доставку по всей России.</p>
+        </div>
+        <div class="ap-block">
+            <h3>Как это работает</h3>
+            <p>Выбираешь плёнку → оформляешь заказ → оплачиваешь по QR или счёту → получаешь курьером, самовывозом или ТК. Заказы со склада в Москве отправляем в день оформления.</p>
+        </div>
+        <div class="ap-block">
+            <h3>Программа лояльности</h3>
+            <p>2% кешбэка баллами с каждого заказа. Баллами можно оплатить до 20% следующей покупки. За приглашённого коллегу — бонусы вам обоим.</p>
+        </div>
+        <div class="ap-block">
+            <h3>Калькулятор расхода</h3>
+            <p style="margin-bottom:12px">Прикинь сколько метров плёнки нужно на оклейку конкретных зон или всего кузова.</p>
+            <button class="btn-primary" onclick="openCalculator()">Открыть калькулятор</button>
+        </div>
+        <div class="ap-block">
+            <h3>Контакты</h3>
+            <p>Москва, склад на адрес доступен по запросу через бот.<br>Часы работы поддержки: 9:00–19:00 ежедневно.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ───────── НИЖНЯЯ НАВИГАЦИЯ ───────── -->
+<div class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('catalog-view', this, 0)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Меню
+    </button>
+    <button class="nav-item" onclick="switchTab('cart-view', this, 1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>
+        Корзина
+        <span class="nav-badge" id="cart-badge">0</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('profile-view', this, 2)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Профиль
+    </button>
+    <button class="nav-item" onclick="switchTab('about-view', this, 3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        О проекте
+    </button>
+</div>
+
+<script>
+// ============================================================
+// КОНФИГ
+// ============================================================
+// Для локальных тестов с ngrok — замени на свой HTTPS URL
+// Пример: 'https://xxxx-xxxx.ngrok-free.app'
+// Для production — укажи домен backend
+const API_BASE = window.location.origin.includes('github.io')
+    ? 'https://ВАШ-BACKEND-ДОМЕН.ru'  // ← ЗАМЕНИТЬ НА РЕАЛЬНЫЙ BACKEND URL
+    : window.location.origin;
+
+const tg = window.Telegram.WebApp;
+tg.expand();
+try { tg.ready(); tg.setHeaderColor('#D4AF37'); } catch(e) {}
+
+// ============================================================
+// СОСТОЯНИЕ
+// ============================================================
+let authToken = null;
+let me = null;
+let products = [];
+let categories = [];
+let cart = [];
+let activeFilter = 'all';
+let searchTerm = '';
+let favoriteIds = new Set();
+let stockSubIds = new Set();
+let appliedPromo = null;
+let bonusToUse = 0;
+let lastPreview = null;
+let currentProduct = null;
+let currentProductImageIdx = 0;
+let selectedCity = localStorage.getItem('armotek_city') || null;
+let searchDebounce = null;
+let previewDebounce = null;
+
+// ============================================================
+// УТИЛИТЫ
+// ============================================================
+async function api(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+    const res = await fetch(API_BASE + path, { headers, ...opts });
+    if (!res.ok) {
+        let msg = 'Ошибка ' + res.status;
+        try { const j = await res.json(); msg = j.detail || msg; } catch(e) {}
+        throw new Error(msg);
+    }
+    if (res.status === 204) return null;
+    return res.json();
+}
+
+function toast(text, isError = false) {
+    const el = document.createElement('div');
+    el.className = 'toast' + (isError ? ' err' : '');
+    el.innerText = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2800);
+    try {
+        if (isError) tg.HapticFeedback.notificationOccurred('error');
+        else tg.HapticFeedback.notificationOccurred('success');
+    } catch(e) {}
+}
+
+function fmt(n) { return Math.round(Number(n || 0)).toLocaleString('ru-RU') + ' ₽'; }
+function fmtQty(n) { return Number(n).toLocaleString('ru-RU'); }
+function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/\n/g, ' '); }
+
+// ============================================================
+// ВЫБОР ГОРОДА
+// ============================================================
+function openCityModal() {
+    document.getElementById('city-modal').classList.add('show');
+}
+function selectCity(city) {
+    selectedCity = city;
+    localStorage.setItem('armotek_city', city);
+    document.getElementById('city-label').innerText = city;
+    document.getElementById('city-modal').classList.remove('show');
+}
+
+// ============================================================
+// КАЛЬКУЛЯТОР РАСХОДА ПЛЁНКИ
+// ============================================================
+let calcData = null;
+let calcSelectedZones = new Set();
+
+async function openCalculator() {
+    showView('calc-view');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (!calcData) {
+        try {
+            calcData = await api('/api/calculator/data');
+        } catch (e) {
+            toast('Не удалось загрузить калькулятор: ' + e.message, true);
+            return;
+        }
+    }
+    renderCalcPresets();
+    renderCalcZones();
+}
+
+function renderCalcPresets() {
+    const wrap = document.getElementById('calc-presets');
+    wrap.innerHTML = calcData.presets.map(p => `
+        <button class="btn-secondary" style="text-align:left; padding:12px 14px" onclick='applyPreset(${JSON.stringify(p.zones)})'>
+            <div style="font-weight:700; font-size:14px">${escapeHtml(p.name)}</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:3px">${escapeHtml(p.desc)}</div>
+        </button>
+    `).join('');
+}
+
+function renderCalcZones() {
+    const wrap = document.getElementById('calc-zones');
+    wrap.innerHTML = calcData.zones.map(z => `
+        <button class="filter-pill ${calcSelectedZones.has(z.code) ? 'active' : ''}"
+                onclick="toggleCalcZone('${z.code}')">${escapeHtml(z.name)}</button>
+    `).join('');
+}
+
+function applyPreset(zones) {
+    calcSelectedZones = new Set(zones);
+    renderCalcZones();
+    runCalc();
+}
+
+function toggleCalcZone(code) {
+    if (calcSelectedZones.has(code)) calcSelectedZones.delete(code);
+    else calcSelectedZones.add(code);
+    renderCalcZones();
+    runCalc();
+}
+
+async function runCalc() {
+    const result = document.getElementById('calc-result');
+    if (calcSelectedZones.size === 0) {
+        result.innerHTML = '';
+        return;
+    }
+    try {
+        const data = await api('/api/calculator/calculate', {
+            method: 'POST',
+            body: JSON.stringify({
+                zone_codes: Array.from(calcSelectedZones),
+                car_size: document.getElementById('calc-size').value,
+                film_width: parseFloat(document.getElementById('calc-width').value),
+            }),
+        });
+        let breakdown = data.breakdown.map(b =>
+            `<div class="total-row"><span>${escapeHtml(b.name)}</span><span>${b.with_waste} м²</span></div>`
+        ).join('');
+        result.innerHTML = `
+            <div class="cart-extras" style="margin:0">
+                <div class="totals" style="border:none; padding-top:0">
+                    ${breakdown}
+                    <div class="total-row" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border)">
+                        <span>Чистая площадь</span><span>${data.total_area_m2} м²</span>
+                    </div>
+                    <div class="total-row"><span>С запасом на раскрой</span><span>${data.total_with_waste_m2} м²</span></div>
+                    <div class="total-row grand">
+                        <span>Нужно плёнки</span>
+                        <span>≈ ${data.linear_meters} м.п.</span>
+                    </div>
+                </div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.4">
+                    Расчёт при ширине рулона ${document.getElementById('calc-width').value} м. Это оценка — реальный расход зависит от модели и метода раскроя.
+                </div>
+                <button class="btn-primary" style="margin-top:14px" onclick="switchTab('catalog-view', null, 0)">Перейти к выбору плёнки</button>
+            </div>`;
+    } catch (e) {
+        result.innerHTML = `<div class="promo-err">Ошибка: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+// Пересчёт при смене размера/ширины
+document.addEventListener('change', (e) => {
+    if (e.target.id === 'calc-size' || e.target.id === 'calc-width') runCalc();
+});
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+async function init() {
+    if (!selectedCity) {
+        document.getElementById('city-modal').classList.add('show');
+    } else {
+        document.getElementById('city-label').innerText = selectedCity;
+    }
+
+    try {
+        const initData = tg.initData;
+        if (!initData) {
+            document.getElementById('product-grid').innerHTML =
+                '<div class="empty-text" style="grid-column: 1 / -1"><h3>Откройте через Telegram</h3><p>Это Mini App для Telegram. В обычном браузере недоступно.</p></div>';
+            return;
+        }
+        const auth = await api('/api/auth/telegram', {
+            method: 'POST',
+            body: JSON.stringify({ init_data: initData }),
+        });
+        authToken = auth.auth_token;
+        me = auth.user;
+
+        if (auth.user.is_new && auth.user.bonus_balance > 0) {
+            toast('Начислено ' + Math.round(auth.user.bonus_balance) + ' приветственных баллов');
+        }
+
+        document.getElementById('promo-banner').style.display = 'flex';
+        await loadCatalog();
+        await loadFavorites();
+        await loadStockSubs();
+        await refreshProfileSilent();
+    } catch (e) {
+        toast('Ошибка авторизации: ' + e.message, true);
+        document.getElementById('product-grid').innerHTML =
+            '<div class="empty-text" style="grid-column: 1 / -1"><p>' + e.message + '</p></div>';
+    }
+}
+
+// ============================================================
+// КАТАЛОГ
+// ============================================================
+async function loadCatalog() {
+    try {
+        let q = '?';
+        if (activeFilter !== 'all') q += 'category=' + encodeURIComponent(activeFilter) + '&';
+        if (searchTerm) q += 'search=' + encodeURIComponent(searchTerm) + '&';
+        const data = await api('/api/catalog' + q);
+        products = data.products;
+        categories = data.categories;
+        renderFilters();
+        renderCatalog();
+    } catch (e) {
+        document.getElementById('product-grid').innerHTML =
+            '<div class="empty-text" style="grid-column: 1 / -1"><p>Ошибка: ' + e.message + '</p></div>';
+    }
+}
+
+function renderFilters() {
+    const wrap = document.getElementById('filters');
+    let html = `<button class="filter-pill ${activeFilter==='all'?'active':''}" onclick="filterCategory('all', this)">Все</button>`;
+    categories.forEach(c => {
+        html += `<button class="filter-pill ${activeFilter===c?'active':''}" onclick="filterCategory('${escapeAttr(c)}', this)">${escapeHtml(c)}</button>`;
+    });
+    wrap.innerHTML = html;
+}
+
+function filterCategory(cat, el) {
+    activeFilter = cat;
+    document.querySelectorAll('#filters .filter-pill').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    loadCatalog();
+}
+
+function onSearchChange() {
+    searchTerm = document.getElementById('search-input').value.trim();
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => loadCatalog(), 350);
+}
+
+function renderCatalog() {
+    const grid = document.getElementById('product-grid');
+    grid.innerHTML = '';
+    if (!products.length) {
+        grid.innerHTML = '<div class="empty-text" style="grid-column: 1 / -1"><h3>Ничего не найдено</h3><p>Попробуй другой фильтр или запрос</p></div>';
+        return;
+    }
+    products.forEach(p => {
+        grid.appendChild(makeProductCard(p));
+    });
+}
+
+function makeProductCard(p) {
+    const stock = p.stock_available;
+    const tracked = p.track_stock;
+
+    let badgeHtml = '';
+    if (p.is_bestseller) badgeHtml = '<span class="stock-badge new">ХИТ</span>';
+    else if (p.is_new) badgeHtml = '<span class="stock-badge new">NEW</span>';
+    else if (!tracked || stock > 5) badgeHtml = '<span class="stock-badge">В наличии</span>';
+    else if (stock > 0) badgeHtml = '<span class="stock-badge low">Осталось ' + fmtQty(stock) + '</span>';
+    else badgeHtml = '<span class="stock-badge out">Нет в наличии</span>';
+
+    const isFav = favoriteIds.has(p.id);
+    const disabled = tracked && stock <= 0;
+
+    const cartItem = cart.find(i => i.product_id === p.id);
+    const inCart = !!cartItem;
+
+    const card = document.createElement('div');
+    card.className = 'product-card';
+
+    const imgHtml = p.image_url
+        ? `<img src="${escapeAttr(p.image_url)}" onerror="this.style.display='none'; this.parentNode.querySelector('.no-img').style.display='flex'">`
+        : '';
+    const noImg = `<div class="no-img" style="${p.image_url ? 'display:none' : ''}">${escapeHtml(p.category || 'Товар')}</div>`;
+
+    card.innerHTML = `
+        <div class="pc-img-wrap" onclick="openProduct(${p.id})">
+            ${imgHtml}
+            ${noImg}
+            ${badgeHtml}
+            <button class="pc-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite(${p.id})">${isFav ? '★' : '☆'}</button>
+        </div>
+        <div class="pc-body">
+            <div class="pc-name">${escapeHtml(p.name)}</div>
+            <div class="pc-row">
+                <div>
+                    ${p.old_price ? `<span class="pc-old-price">${fmt(p.old_price)}</span>` : ''}
+                    <span class="pc-price">${fmt(p.price)}</span>
+                </div>
+                ${inCart ? renderQtyControl(p, cartItem) : ''}
+            </div>
+            ${!inCart ? (disabled
+                ? `<button class="pc-add-btn" onclick="event.stopPropagation(); toggleStockSub(${p.id})" style="margin-top:8px; background: ${stockSubIds.has(p.id) ? 'var(--card-soft)' : 'var(--accent-soft)'}; color: var(--accent); border: 1px solid var(--accent-dim)">${stockSubIds.has(p.id) ? '✓ Подписка' : '🔔 Уведомить'}</button>`
+                : `<button class="pc-add-btn" onclick="addToCart(${p.id})" style="margin-top:8px">В корзину</button>`) : ''}
+        </div>`;
+    return card;
+}
+
+function renderQtyControl(p, cartItem) {
+    return `
+        <div class="pc-qty">
+            <button class="pc-qty-btn" onclick="changeCartQty(${p.id}, -1, event)">−</button>
+            <span class="pc-qty-val">${fmtQty(cartItem.qty)}</span>
+            <button class="pc-qty-btn" onclick="changeCartQty(${p.id}, 1, event)">+</button>
+        </div>`;
+}
+
+// ============================================================
+// КАРТОЧКА ТОВАРА
+// ============================================================
+async function openProduct(id) {
+    let p = products.find(x => x.id === id);
+    if (!p) {
+        try { p = await api('/api/catalog/product/' + id); }
+        catch (e) { toast('Не удалось загрузить товар', true); return; }
+    }
+    currentProduct = p;
+    currentProductImageIdx = 0;
+
+    const images = [];
+    if (p.image_url) images.push(p.image_url);
+    if (p.images && Array.isArray(p.images)) p.images.forEach(u => { if (u && !images.includes(u)) images.push(u); });
+
+    renderProductImage(images);
+
+    const stock = p.stock_available;
+    const tracked = p.track_stock;
+    let badgeText = 'В наличии';
+    let badgeClass = '';
+    if (tracked) {
+        if (stock <= 0) { badgeText = 'Нет в наличии'; badgeClass = ' style="color:var(--danger); border-color:rgba(231,76,60,0.5); background:rgba(231,76,60,0.1)"'; }
+        else if (stock < 5) badgeText = 'Осталось ' + fmtQty(stock);
+    }
+
+    const cashback = Math.round(p.price * 0.02);
+
+    const body = document.getElementById('pd-body');
+    body.innerHTML = `
+        <span class="pd-stock-badge"${badgeClass}>${badgeText}</span>
+        <div class="pd-name">${escapeHtml(p.name)}</div>
+        <div class="pd-price-row">
+            <div class="pd-price">${fmt(p.price)}</div>
+            ${p.old_price ? `<div class="pd-old-price">${fmt(p.old_price)}</div>` : ''}
+        </div>
+        <div class="pd-bonus">★ +${cashback} баллов на счёт</div>
+        <div class="pd-chips">
+            <div class="pd-chip"><div class="l">Тип</div><div class="v">${escapeHtml(p.category || '—')}</div></div>
+            <div class="pd-chip"><div class="l">${p.subcategory ? 'Покрытие' : 'Артикул'}</div><div class="v">${escapeHtml(p.subcategory || p.sku || '—')}</div></div>
+            <div class="pd-chip"><div class="l">Мин. кол-во</div><div class="v">${fmtQty(p.min_qty || 1)} ${escapeHtml(p.base_unit || 'шт')}</div></div>
+        </div>
+        ${p.description ? `<div class="pd-desc">${escapeHtml(p.description)}</div>` : ''}
+        <div class="pd-section-title">С этим покупают</div>
+        <div class="pd-related" id="pd-related"></div>
+    `;
+
+    // Похожие
+    const related = products.filter(x => x.id !== p.id && x.category === p.category).slice(0, 6);
+    const relWrap = document.getElementById('pd-related');
+    if (related.length === 0) {
+        relWrap.innerHTML = '<div class="empty-text" style="padding: 0; color: var(--text-muted); font-size:12px">Похожих товаров нет</div>';
+    } else {
+        relWrap.innerHTML = related.map(r => `
+            <div class="item" onclick="openProduct(${r.id})">
+                ${r.image_url ? `<img src="${escapeAttr(r.image_url)}">` : '<div style="aspect-ratio:1/1;background:var(--card-soft);display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11px">Товар</div>'}
+                <div class="n">${escapeHtml(r.name)}</div>
+                <div class="p">${fmt(r.price)}</div>
+            </div>
+        `).join('');
+    }
+
+    // Sticky CTA снизу
+    const cartItem = cart.find(i => i.product_id === p.id);
+    const cta = document.getElementById('pd-cta-wrap');
+    const outOfStock = tracked && stock <= 0;
+    if (cartItem) {
+        cta.innerHTML = `
+            <button onclick="switchTab('cart-view', null, 1)" style="background: var(--accent)">
+                <span>В корзине: ${fmtQty(cartItem.qty)} ${escapeHtml(p.base_unit || '')}</span>
+                <span>Перейти к корзине ›</span>
+            </button>`;
+    } else if (outOfStock) {
+        // Нет в наличии → кнопка подписки на поступление
+        const subscribed = stockSubIds.has(p.id);
+        cta.innerHTML = `
+            <button onclick="toggleStockSub(${p.id})" style="background: ${subscribed ? 'var(--card-soft)' : 'var(--accent)'}; color: ${subscribed ? 'var(--accent)' : '#000'}; border: ${subscribed ? '1px solid var(--accent-dim)' : 'none'}">
+                <span>${subscribed ? '✓ Вы подписаны на поступление' : '🔔 Уведомить о поступлении'}</span>
+            </button>`;
+    } else {
+        cta.innerHTML = `
+            <button onclick="addToCart(${p.id}); openProduct(${p.id})">
+                <span>В корзину</span>
+                <span>${fmt(p.price)}</span>
+            </button>`;
+    }
+
+    showView('product-view');
+    window.scrollTo(0, 0);
+}
+
+function renderProductImage(images) {
+    const imgEl = document.getElementById('pd-img');
+    const dotsEl = document.getElementById('pd-dots');
+    if (!images.length) {
+        imgEl.style.display = 'none';
+        imgEl.parentNode.style.background = 'var(--card)';
+        dotsEl.innerHTML = '';
+        return;
+    }
+    imgEl.style.display = 'block';
+    imgEl.src = images[currentProductImageIdx] || images[0];
+    if (images.length > 1) {
+        dotsEl.innerHTML = images.map((_, i) =>
+            `<div class="pd-dot ${i===currentProductImageIdx?'active':''}" onclick="setProductImage(${i})"></div>`
+        ).join('');
+    } else {
+        dotsEl.innerHTML = '';
+    }
+    // Запоминаем для свайпа
+    window.__pdImages = images;
+    // Свайп
+    setupSwipe(imgEl.parentNode);
+}
+
+function setProductImage(i) {
+    currentProductImageIdx = i;
+    renderProductImage(window.__pdImages || []);
+}
+
+let __touchStartX = null;
+function setupSwipe(el) {
+    if (el.__swipeSet) return;
+    el.__swipeSet = true;
+    el.addEventListener('touchstart', e => { __touchStartX = e.touches[0].clientX; });
+    el.addEventListener('touchend', e => {
+        if (__touchStartX == null) return;
+        const dx = e.changedTouches[0].clientX - __touchStartX;
+        __touchStartX = null;
+        const images = window.__pdImages || [];
+        if (images.length < 2) return;
+        if (dx < -40 && currentProductImageIdx < images.length - 1) setProductImage(currentProductImageIdx + 1);
+        else if (dx > 40 && currentProductImageIdx > 0) setProductImage(currentProductImageIdx - 1);
+    });
+}
+
+function closeProductView() {
+    showView('catalog-view');
+    document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', i === 0));
+}
+
+// ============================================================
+// КОРЗИНА
+// ============================================================
+function addToCart(id) {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    const existing = cart.find(i => i.product_id === id);
+    if (existing) {
+        if (p.track_stock && existing.qty + (p.qty_step || 1) > p.stock_available) {
+            toast('Больше нет на складе', true);
+            return;
+        }
+        existing.qty += (p.qty_step || 1);
+    } else {
+        cart.push({ product_id: id, qty: p.min_qty || 1, _product: p });
+    }
+    try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
+    updateCartBadge();
+    renderCatalog();
+    toast('Добавлено в корзину');
+}
+
+function changeCartQty(productId, change, event) {
+    if (event) event.stopPropagation();
+    const item = cart.find(i => i.product_id === productId);
+    if (!item) return;
+    const p = item._product;
+    const step = p.qty_step || 1;
+    const newQty = +(item.qty + change * step).toFixed(3);
+    if (newQty < (p.min_qty || 1)) {
+        const idx = cart.indexOf(item);
+        cart.splice(idx, 1);
+    } else if (p.track_stock && newQty > p.stock_available) {
+        toast('Больше нет на складе', true);
+        return;
+    } else {
+        item.qty = newQty;
+    }
+    updateCartBadge();
+    renderCatalog();
+    if (document.getElementById('cart-view').classList.contains('active')) renderCart();
+}
+
+function updateCartBadge() {
+    const b = document.getElementById('cart-badge');
+    if (cart.length > 0) {
+        b.style.display = 'flex';
+        b.innerText = cart.length;
+    } else {
+        b.style.display = 'none';
+    }
+}
+
+function renderCart() {
+    const wrap = document.getElementById('cart-content');
+    if (cart.length === 0) {
+        wrap.innerHTML = `
+            <div class="cart-empty">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 01-8 0"/>
+                </svg>
+                <h3>Корзина пуста</h3>
+                <p>Добавьте плёнку, чтобы оформить заказ</p>
+                <button class="btn-primary" onclick="switchTab('catalog-view', null, 0)">Перейти в каталог</button>
+            </div>`;
+        return;
+    }
+
+    let html = '<div style="padding-top:10px">';
+    cart.forEach(item => {
+        const p = item._product;
+        html += `
+            <div class="cart-item">
+                ${p.image_url
+                    ? `<img class="cart-item-img" src="${escapeAttr(p.image_url)}">`
+                    : '<div class="cart-item-img"></div>'}
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${escapeHtml(p.name)}</div>
+                    <div class="cart-item-unit">${fmt(p.price)} / ${escapeHtml(p.base_unit || 'шт')}</div>
+                    <div class="cart-item-price">${fmt(p.price * item.qty)}</div>
+                </div>
+                <div class="pc-qty">
+                    <button class="pc-qty-btn" onclick="changeCartQty(${p.id}, -1)">−</button>
+                    <span class="pc-qty-val">${fmtQty(item.qty)}</span>
+                    <button class="pc-qty-btn" onclick="changeCartQty(${p.id}, 1)">+</button>
+                </div>
+            </div>`;
+    });
+    html += '</div>';
+
+    const max = me ? Math.round(me.bonus_balance || 0) : 0;
+    html += `
+        <div class="cart-extras">
+            <div class="promo-input-row">
+                <input id="promo-input" placeholder="Промокод" value="${appliedPromo ? escapeAttr(appliedPromo.code) : ''}">
+                <button onclick="applyPromo()">${appliedPromo ? 'Сменить' : 'Применить'}</button>
+            </div>
+            ${appliedPromo ? `<div class="promo-applied"><span>✓ Промокод ${escapeHtml(appliedPromo.code)} применён</span><span class="x" onclick="removePromo()">✕</span></div>` : ''}
+            <div id="promo-error-row"></div>
+            ${max > 0 ? `
+                <div class="bonus-row">
+                    <span class="label">★ Баллы:</span>
+                    <input type="number" id="bonus-input" min="0" value="${bonusToUse}" oninput="onBonusChange()">
+                    <button class="max-btn" onclick="useMaxBonus()">МАКС</button>
+                </div>
+                <div class="bonus-hint">Доступно: ${max} баллов · максимум на этот заказ: <span id="bonus-max-hint">—</span></div>
+            ` : ''}
+            <div class="totals" id="totals-block"></div>
+        </div>
+    `;
+    html += `<button class="checkout-cta" id="checkout-btn" onclick="startCheckout()">
+        <span>Оформить заказ</span>
+        <span id="checkout-total">—</span>
+    </button>`;
+
+    wrap.innerHTML = html;
+    requestPreview();
+}
+
+function applyPromo() {
+    const code = document.getElementById('promo-input').value.trim().toUpperCase();
+    if (!code) { removePromo(); return; }
+    appliedPromo = { code };
+    requestPreview();
+}
+function removePromo() {
+    appliedPromo = null;
+    const input = document.getElementById('promo-input');
+    if (input) input.value = '';
+    const err = document.getElementById('promo-error-row');
+    if (err) err.innerHTML = '';
+    requestPreview();
+    renderCart();
+}
+function onBonusChange() {
+    const v = parseFloat(document.getElementById('bonus-input').value) || 0;
+    bonusToUse = Math.max(0, v);
+    clearTimeout(previewDebounce);
+    previewDebounce = setTimeout(requestPreview, 300);
+}
+function useMaxBonus() {
+    if (!lastPreview) return;
+    bonusToUse = lastPreview.bonus_max;
+    const input = document.getElementById('bonus-input');
+    if (input) input.value = bonusToUse;
+    requestPreview();
+}
+
+async function requestPreview() {
+    if (cart.length === 0) { lastPreview = null; return; }
+    try {
+        const data = await api('/api/orders/preview', {
+            method: 'POST',
+            body: JSON.stringify({
+                items: cart.map(i => ({ product_id: i.product_id, qty: i.qty })),
+                promo_code: appliedPromo ? appliedPromo.code : null,
+                use_bonus: bonusToUse,
+            }),
+        });
+        lastPreview = data;
+        renderTotals(data);
+        const promoErr = document.getElementById('promo-error-row');
+        if (promoErr) {
+            if (data.promo_error) {
+                promoErr.innerHTML = `<div class="promo-err">${escapeHtml(data.promo_error)}</div>`;
+                appliedPromo = null;
+            } else {
+                promoErr.innerHTML = '';
+            }
+        }
+        const bm = document.getElementById('bonus-max-hint');
+        if (bm) bm.innerText = Math.round(data.bonus_max);
+        const ct = document.getElementById('checkout-total');
+        if (ct) ct.innerText = fmt(data.total_amount);
+    } catch (e) {
+        toast('Ошибка расчёта: ' + e.message, true);
+    }
+}
+
+function renderTotals(d) {
+    const el = document.getElementById('totals-block');
+    if (!el) return;
+    let html = `<div class="total-row"><span>Сумма</span><span>${fmt(d.subtotal)}</span></div>`;
+    if (d.discount_amount > 0) html += `<div class="total-row discount"><span>Скидка по промокоду</span><span>−${fmt(d.discount_amount)}</span></div>`;
+    if (d.bonus_used > 0) html += `<div class="total-row bonus"><span>Списано баллов</span><span>−${fmt(d.bonus_used)}</span></div>`;
+    if (d.delivery_cost > 0) html += `<div class="total-row"><span>Доставка</span><span>${fmt(d.delivery_cost)}</span></div>`;
+    if (d.free_shipping_threshold && d.subtotal < d.free_shipping_threshold) {
+        const left = d.free_shipping_threshold - d.subtotal;
+        html += `<div class="total-row" style="color:var(--accent); font-size:11px"><span>До бесплатной доставки</span><span>${fmt(left)}</span></div>`;
+    }
+    html += `<div class="total-row grand"><span>Итого</span><span>${fmt(d.total_amount)}</span></div>`;
+    if (d.cashback_earned > 0) html += `<div class="total-row bonus" style="font-size:12px"><span>Вернётся баллами</span><span>+${Math.round(d.cashback_earned)}</span></div>`;
+    el.innerHTML = html;
+}
+
+// ============================================================
+// ИЗБРАННОЕ
+// ============================================================
+async function loadFavorites() {
+    try {
+        const ids = await api('/api/favorites');
+        favoriteIds = new Set(ids);
+    } catch (e) {}
+}
+
+async function loadStockSubs() {
+    try {
+        const ids = await api('/api/stock-subscriptions');
+        stockSubIds = new Set(ids);
+    } catch (e) {}
+}
+
+async function toggleStockSub(productId) {
+    try {
+        if (stockSubIds.has(productId)) {
+            await api('/api/stock-subscriptions/' + productId, { method: 'DELETE' });
+            stockSubIds.delete(productId);
+            toast('Подписка отменена');
+        } else {
+            await api('/api/stock-subscriptions', { method: 'POST', body: JSON.stringify({ product_id: productId }) });
+            stockSubIds.add(productId);
+            toast('Уведомим когда появится в наличии');
+        }
+        renderCatalog();
+        if (currentProduct && currentProduct.id === productId &&
+            document.getElementById('product-view').classList.contains('active')) {
+            openProduct(productId);
+        }
+    } catch (e) { toast('Ошибка: ' + e.message, true); }
+}
+async function toggleFavorite(productId) {
+    try {
+        if (favoriteIds.has(productId)) {
+            await api('/api/favorites/' + productId, { method: 'DELETE' });
+            favoriteIds.delete(productId);
+        } else {
+            await api('/api/favorites', { method: 'POST', body: JSON.stringify({ product_id: productId }) });
+            favoriteIds.add(productId);
+        }
+        renderCatalog();
+    } catch (e) { toast('Ошибка: ' + e.message, true); }
+}
+
+// ============================================================
+// ОФОРМЛЕНИЕ
+// ============================================================
+function startCheckout() {
+    if (cart.length === 0) { toast('Корзина пуста', true); return; }
+    populateCities();
+    populateDates();
+    document.getElementById('co-step-1').style.display = 'block';
+    document.getElementById('co-step-2').style.display = 'none';
+    document.getElementById('co-step-3').style.display = 'none';
+    if (me) {
+        document.getElementById('co-name').value = me.full_name || '';
+        document.getElementById('co-phone').value = me.phone || '';
+    }
+    if (selectedCity) {
+        setTimeout(() => {
+            const sel = document.getElementById('co-city');
+            for (let i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === selectedCity) { sel.selectedIndex = i; break; }
+            }
+        }, 50);
+    }
+    showView('checkout-view');
+}
+
+function populateCities() {
+    const sel = document.getElementById('co-city');
+    const list = ['Москва', 'Санкт-Петербург', 'Екатеринбург', 'Казань', 'Краснодар', 'Новосибирск', 'Другой (СДЭК/ТК)'];
+    sel.innerHTML = list.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function nextStep(step) {
+    if (step === 2) {
+        if (!document.getElementById('co-name').value.trim() || !document.getElementById('co-phone').value.trim()) {
+            toast('Укажи имя и телефон', true); return;
+        }
+        document.getElementById('co-step-1').style.display = 'none';
+        document.getElementById('co-step-2').style.display = 'block';
+        updateTimeSlots();
+    }
+    if (step === 3) {
+        if (!document.getElementById('co-address').value.trim()) {
+            toast('Укажи адрес', true); return;
+        }
+        document.getElementById('co-step-2').style.display = 'none';
+        document.getElementById('co-step-3').style.display = 'block';
+        renderCheckoutTotals();
+    }
+    window.scrollTo(0, 0);
+}
+
+function renderCheckoutTotals() {
+    if (!lastPreview) return;
+    const d = lastPreview;
+    let html = '<div class="totals">';
+    html += `<div class="total-row"><span>Сумма</span><span>${fmt(d.subtotal)}</span></div>`;
+    if (d.discount_amount > 0) html += `<div class="total-row discount"><span>Скидка</span><span>−${fmt(d.discount_amount)}</span></div>`;
+    if (d.bonus_used > 0) html += `<div class="total-row bonus"><span>Баллы</span><span>−${fmt(d.bonus_used)}</span></div>`;
+    html += `<div class="total-row grand"><span>Итого</span><span>${fmt(d.total_amount)}</span></div>`;
+    if (d.cashback_earned > 0) html += `<div class="total-row bonus" style="font-size:12px"><span>Кешбэк баллами</span><span>+${Math.round(d.cashback_earned)}</span></div>`;
+    html += '</div>';
+    document.getElementById('co-totals').innerHTML = html;
+}
+
+function populateDates() {
+    const select = document.getElementById('co-date');
+    select.innerHTML = '';
+    const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    let count = 0;
+    for (let i = 1; i < 14; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        if (d.getDay() === 0) continue;
+        const text = `${days[d.getDay()]}, ${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+        select.appendChild(new Option(text, d.toISOString().split('T')[0]));
+        count++;
+        if (count >= 7) break;
+    }
+    select.removeEventListener('change', updateTimeSlots);
+    select.addEventListener('change', updateTimeSlots);
+    updateTimeSlots();
+}
+
+function updateTimeSlots() {
+    const dateStr = document.getElementById('co-date').value;
+    const sel = document.getElementById('co-time');
+    sel.innerHTML = '';
+    if (!dateStr) return;
+    const d = new Date(dateStr);
+    if (d.getDay() === 6) sel.add(new Option('10:00 — 15:00', '10-15'));
+    else {
+        sel.add(new Option('10:00 — 14:00', '10-14'));
+        sel.add(new Option('14:00 — 18:00', '14-18'));
+    }
+}
+
+function onPaymentChange() {
+    document.getElementById('invoice-form').style.display =
+        document.getElementById('co-payment').value === 'invoice' ? 'block' : 'none';
+}
+
+async function submitOrder() {
+    if (cart.length === 0) return;
+    const paymentMethod = document.getElementById('co-payment').value;
+    const invoiceData = paymentMethod === 'invoice' ? collectInvoice() : null;
+    if (paymentMethod === 'invoice' && !invoiceData) return;
+
+    const body = {
+        items: cart.map(i => ({ product_id: i.product_id, qty: i.qty })),
+        delivery_city: document.getElementById('co-city').value,
+        delivery_address: document.getElementById('co-address').value.trim(),
+        delivery_method: document.getElementById('co-method').value,
+        delivery_time: document.getElementById('co-date').value + ' ' + document.getElementById('co-time').value,
+        studio: document.getElementById('co-studio').value.trim() || null,
+        comment: document.getElementById('co-comment').value.trim() || null,
+        payment_method: paymentMethod,
+        promo_code: appliedPromo ? appliedPromo.code : null,
+        use_bonus: bonusToUse,
+    };
+
+    const btn = document.getElementById('co-submit-btn');
+    btn.disabled = true; btn.innerText = 'Оформляем...';
+    try {
+        const order = await api('/api/orders', { method: 'POST', body: JSON.stringify(body) });
+        if (paymentMethod === 'invoice' && invoiceData) {
+            try { await api('/api/payment/invoice', { method: 'POST', body: JSON.stringify({ order_id: order.id, ...invoiceData }) }); }
+            catch (e) { toast('Заказ создан, но реквизиты не отправились: ' + e.message, true); }
+        }
+        try {
+            await api('/api/profile/contacts', {
+                method: 'PUT',
+                body: JSON.stringify({ full_name: document.getElementById('co-name').value.trim(), phone: document.getElementById('co-phone').value.trim() }),
+            });
+        } catch(e) {}
+
+        cart = []; appliedPromo = null; bonusToUse = 0; lastPreview = null;
+        updateCartBadge();
+        await refreshProfileSilent();
+        showSuccess(order);
+    } catch (e) {
+        toast('Ошибка: ' + e.message, true);
+        btn.disabled = false; btn.innerText = 'Оформить заказ';
+    }
+}
+
+function collectInvoice() {
+    const company = document.getElementById('inv-company').value.trim();
+    const inn = document.getElementById('inv-inn').value.trim();
+    const bank = document.getElementById('inv-bank').value.trim();
+    const bik = document.getElementById('inv-bik').value.trim();
+    const account = document.getElementById('inv-account').value.trim();
+    const email = document.getElementById('inv-email').value.trim();
+    if (!company || !inn || !bank || !bik || !account || !email) {
+        toast('Заполни все реквизиты', true); return null;
+    }
+    return {
+        company_name: company, inn, kpp: document.getElementById('inv-kpp').value.trim() || null,
+        bank_name: bank, bik, account, email,
+    };
+}
+
+async function showSuccess(order) {
+    showView('success-view');
+    document.getElementById('success-uid').innerText = order.order_uid;
+    const el = document.getElementById('payment-info');
+    if (order.payment_method === 'qr') {
+        try {
+            const ps = await api('/api/payment/settings');
+            if (ps.qr_image_url) {
+                el.innerHTML = `
+                    <p>К оплате: <b style="color:var(--accent); font-size:18px">${fmt(order.total_amount)}</b></p>
+                    <img src="${escapeAttr(ps.qr_image_url)}" class="qr-img">
+                    <p style="font-size:12px">Отсканируйте QR в приложении банка</p>
+                    <button class="btn-secondary" style="margin-top:14px" onclick="confirmQrPayment(${order.id})">Я оплатил</button>`;
+            } else {
+                el.innerHTML = `<p>К оплате: <b>${fmt(order.total_amount)}</b></p><p>Менеджер свяжется по поводу оплаты</p>`;
+            }
+        } catch(e) {
+            el.innerHTML = `<p>К оплате: <b>${fmt(order.total_amount)}</b></p>`;
+        }
+    } else {
+        el.innerHTML = `<p>Счёт будет отправлен на указанный email в течение часа.</p>`;
+    }
+}
+
+async function confirmQrPayment(orderId) {
+    try {
+        await api('/api/payment/confirm', { method: 'POST', body: JSON.stringify({ order_id: orderId }) });
+        toast('Спасибо! Менеджер подтвердит оплату.');
+        const btn = document.querySelector('#payment-info button');
+        if (btn) btn.style.display = 'none';
+    } catch (e) { toast('Ошибка: ' + e.message, true); }
+}
+
+// ============================================================
+// ЗАКАЗЫ
+// ============================================================
+async function loadOrderHistory() {
+    const el = document.getElementById('pf-history-orders');
+    if (!el || el.dataset.loaded) return;
+    el.dataset.loaded = '1';
+    try {
+        const orders = await api('/api/history');
+        renderOrdersList(el, orders);
+        const active = orders.filter(o => o.status !== 'done' && o.status !== 'cancelled');
+        const aEl = document.getElementById('pf-active-orders');
+        if (active.length === 0) {
+            aEl.innerHTML = '<div class="pf-empty">Сейчас активных заказов нет</div>';
+        } else {
+            renderOrdersList(aEl, active);
+        }
+    } catch (e) {
+        el.innerHTML = '<div class="pf-empty">Ошибка: ' + e.message + '</div>';
+    }
+}
+
+function renderOrdersList(wrap, orders) {
+    if (!orders.length) {
+        wrap.innerHTML = '<div class="pf-empty">Заказов пока нет</div>';
+        return;
+    }
+    wrap.innerHTML = orders.map(o => {
+        const dt = new Date(o.created_at).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        return `
+        <div class="order-card" onclick="openOrder(${o.id})" style="margin: 8px 0">
+            <div class="order-card-r1">
+                <div class="order-uid">${escapeHtml(o.order_uid)}</div>
+                <span class="order-badge ob-${o.status}">${statusLabel(o.status)}</span>
+            </div>
+            <div class="order-card-r2">
+                <span>${dt}</span>
+                <span class="amount">${fmt(o.total_amount)}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function statusLabel(s) {
+    return ({'new':'Новый','processing':'В работе','shipped':'Отправлен','done':'Выполнен','cancelled':'Отменён'})[s] || s;
+}
+
+async function openOrder(id) {
+    showView('order-detail-view-wrap');
+    // Если этого view ещё нет — создадим
+    let v = document.getElementById('order-detail-view-wrap');
+    if (!v) {
+        v = document.createElement('div');
+        v.id = 'order-detail-view-wrap';
+        v.className = 'view active';
+        document.body.insertBefore(v, document.querySelector('.bottom-nav'));
+    } else {
+        v.classList.add('active');
+        document.querySelectorAll('.view').forEach(x => { if (x.id !== 'order-detail-view-wrap') x.classList.remove('active'); });
+    }
+    v.innerHTML = `
+        <div class="secondary-header">
+            <button class="back-btn" onclick="switchTab('profile-view', null, 2)">‹ Назад</button>
+            <h1>Заказ</h1>
+        </div>
+        <div class="loading"><span class="spinner"></span></div>`;
+    try {
+        const o = await api('/api/orders/' + id);
+        const dt = new Date(o.created_at).toLocaleString('ru-RU');
+        let itemsHtml = '';
+        o.items.forEach(it => {
+            itemsHtml += `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${escapeHtml(it.name_snapshot)}</div>
+                        <div class="cart-item-unit">${fmtQty(it.qty)} ${escapeHtml(it.unit_snapshot)} × ${fmt(it.price_snapshot)}</div>
+                    </div>
+                    <div style="font-weight:700">${fmt(it.total_snapshot)}</div>
+                </div>`;
+        });
+        v.innerHTML = `
+            <div class="secondary-header">
+                <button class="back-btn" onclick="switchTab('profile-view', null, 2)">‹ Назад</button>
+                <h1>${escapeHtml(o.order_uid)}</h1>
+            </div>
+            <div style="padding-top:16px">
+                <div class="od-section" style="text-align:center">
+                    <span class="order-badge ob-${o.status}">${statusLabel(o.status)}</span>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:6px">${dt}</div>
+                </div>
+                <div class="od-section">
+                    <div class="pd-section-title" style="font-size:15px">Состав</div>
+                    ${itemsHtml}
+                </div>
+                <div class="od-section">
+                    <div class="cart-extras">
+                        <div class="totals">
+                            <div class="total-row"><span>Сумма</span><span>${fmt(o.subtotal)}</span></div>
+                            ${o.discount_amount ? `<div class="total-row discount"><span>Скидка</span><span>−${fmt(o.discount_amount)}</span></div>` : ''}
+                            ${o.bonus_used ? `<div class="total-row bonus"><span>Баллы</span><span>−${fmt(o.bonus_used)}</span></div>` : ''}
+                            ${o.delivery_cost ? `<div class="total-row"><span>Доставка</span><span>${fmt(o.delivery_cost)}</span></div>` : ''}
+                            <div class="total-row grand"><span>Итого</span><span>${fmt(o.total_amount)}</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="od-section">
+                    <div class="pd-section-title" style="font-size:15px">Доставка</div>
+                    <div class="od-info-block">
+                        ${o.delivery_method ? '📦 ' + escapeHtml(o.delivery_method) + '<br>' : ''}
+                        ${o.delivery_city ? '📍 ' + escapeHtml(o.delivery_city) + ', ' + escapeHtml(o.delivery_address || '') + '<br>' : ''}
+                        ${o.delivery_time ? '🕒 ' + escapeHtml(o.delivery_time) + '<br>' : ''}
+                        ${o.studio ? '🏢 ' + escapeHtml(o.studio) + '<br>' : ''}
+                        ${o.comment ? '💬 ' + escapeHtml(o.comment) : ''}
+                    </div>
+                </div>
+                <div class="od-section">
+                    <div class="pd-section-title" style="font-size:15px">Оплата</div>
+                    <div class="od-info-block">
+                        Способ: ${o.payment_method || '—'}<br>
+                        Статус: <b style="color:${o.payment_status === 'paid' ? 'var(--success)' : 'var(--accent)'}">${o.payment_status}</b>
+                    </div>
+                </div>
+                <div class="od-section" style="display:flex; gap:8px; flex-direction:column">
+                    <button class="btn-secondary" onclick='repeatOrder(${JSON.stringify(o.items.map(it=>({product_id: it.product_id, qty: it.qty}))).replace(/"/g, "&quot;")})'>🔁 Повторить заказ</button>
+                    ${o.status !== 'cancelled' && o.status !== 'shipped' && o.status !== 'done' && o.payment_status !== 'paid'
+                        ? `<button class="btn-secondary danger" onclick="cancelOrder(${o.id})">Отменить заказ</button>` : ''}
+                </div>
+            </div>`;
+    } catch (e) {
+        v.innerHTML = '<div class="empty-text">Ошибка: ' + e.message + '</div>';
+    }
+}
+
+async function cancelOrder(id) {
+    if (!confirm('Отменить заказ?')) return;
+    try {
+        await api('/api/orders/' + id + '/cancel', { method: 'POST' });
+        toast('Заказ отменён');
+        await refreshProfileSilent();
+        switchTab('profile-view', null, 2);
+    } catch (e) { toast('Ошибка: ' + e.message, true); }
+}
+
+async function repeatOrder(items) {
+    cart = []; appliedPromo = null; bonusToUse = 0;
+    let missing = 0;
+    for (const it of items) {
+        if (!it.product_id) continue;
+        let p = products.find(x => x.id === it.product_id);
+        if (!p) {
+            try { p = await api('/api/catalog/product/' + it.product_id); } catch (e) { missing++; continue; }
+        }
+        if (p.track_stock && p.stock_available < it.qty) {
+            if (p.stock_available <= 0) { missing++; continue; }
+            cart.push({ product_id: it.product_id, qty: Math.max(p.min_qty || 1, p.stock_available), _product: p });
+        } else {
+            cart.push({ product_id: it.product_id, qty: it.qty, _product: p });
+        }
+    }
+    updateCartBadge();
+    if (missing > 0) toast('Часть товаров недоступна (' + missing + ')', true);
+    switchTab('cart-view', null, 1);
+}
+
+// ============================================================
+// ПРОФИЛЬ
+// ============================================================
+async function refreshProfileSilent() {
+    try {
+        const p = await api('/api/profile');
+        me = { ...me, ...p, bonus_balance: p.bonus_balance };
+        renderProfile(p);
+    } catch (e) {}
+}
+
+function renderProfile(p) {
+    const name = p.full_name || p.username || 'Гость';
+    const initial = name.trim()[0] ? name.trim()[0].toUpperCase() : 'A';
+    document.getElementById('pf-avatar').innerText = initial;
+    document.getElementById('pf-name').innerText = name;
+    document.getElementById('pf-username').innerText = p.username ? '@' + p.username : '';
+    document.getElementById('pf-balance').innerText = Math.round(p.bonus_balance || 0);
+
+    const ref = p.referral;
+    if (ref) {
+        document.getElementById('ref-link').innerText = ref.ref_link;
+        document.getElementById('ref-invited').innerText = ref.invited_count || 0;
+        document.getElementById('ref-paid').innerText = ref.paid_invited_count || 0;
+        document.getElementById('ref-earned').innerText = Math.round(ref.earned_total || 0);
+    }
+
+    document.getElementById('cust-name').value = p.full_name || '';
+    document.getElementById('cust-phone').value = p.phone || '';
+    document.getElementById('cust-email').value = p.email || '';
+
+    // Если профиль открыт и истории ещё не загружено
+    const sec = document.getElementById('pf-history-section');
+    if (sec && sec.classList.contains('open')) loadOrderHistory();
+}
+
+async function saveContacts() {
+    try {
+        await api('/api/profile/contacts', {
+            method: 'PUT',
+            body: JSON.stringify({
+                full_name: document.getElementById('cust-name').value.trim(),
+                phone: document.getElementById('cust-phone').value.trim(),
+                email: document.getElementById('cust-email').value.trim(),
+            }),
+        });
+        toast('Сохранено');
+        await refreshProfileSilent();
+    } catch (e) { toast('Ошибка: ' + e.message, true); }
+}
+
+function copyRefLink() {
+    const link = document.getElementById('ref-link').innerText;
+    if (!link || link === '—') return;
+    navigator.clipboard.writeText(link).then(() => toast('Ссылка скопирована'))
+        .catch(() => toast('Не удалось скопировать', true));
+}
+
+function shareRefLink() {
+    const link = document.getElementById('ref-link').innerText;
+    if (!link || link === '—') return;
+    const text = 'Заказывай плёнки NAR и Crystal через приложение Armotek Films. Получи 300 баллов на первый заказ по моей ссылке:';
+    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+}
+
+function openBotChat() {
+    try { tg.close(); } catch(e) {}
+}
+
+function toggleSection(id) {
+    document.getElementById(id).classList.toggle('open');
+}
+
+// ============================================================
+// НАВИГАЦИЯ
+// ============================================================
+function showView(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const el = document.getElementById(viewId);
+    if (el) el.classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function switchTab(viewId, navEl, navIdx) {
+    showView(viewId);
+    document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', i === navIdx));
+    if (viewId === 'cart-view') renderCart();
+    if (viewId === 'profile-view') refreshProfileSilent();
+}
+
+function goToOrders() {
+    switchTab('profile-view', null, 2);
+    setTimeout(() => {
+        const sec = document.getElementById('pf-history-section');
+        if (!sec.classList.contains('open')) sec.classList.add('open');
+        loadOrderHistory();
+    }, 100);
+}
+
+init();
+</script>
+</body>
+</html>
